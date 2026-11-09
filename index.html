@@ -146,7 +146,7 @@
 <script>
 var REF="xacwvpxfutczxsqxykiu";
 var ANON="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhhY3d2cHhmdXRjenhzcXh5a2l1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI2OTc0ODYsImV4cCI6MjA5ODI3MzQ4Nn0.a2MvwEYNFaR2gir3DfThl7N4fE2cZxQZX8ySSQc5a8E";
-var PORTAL="https://portal.airbutlercollective.com/";
+var PORTAL=(location.origin+location.pathname).replace(/index\.html$/,"");
 
 var TOKEN="", REFRESH="", PROFILE=null, ME={};
 var MISSIONS=[], READY={}, INCIDENTS=[], OPEN=[], VENDORS=[], CREW=[], ORDERS=[], EVENTS=[], ASSIGN=[];
