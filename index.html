@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0f172a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Air Butler Collective - Employee Portal</title>
+<style>
+  :root{--ink:#101826;--muted:#6b7280;--line:#e6e4e0;--bg:#f7f6f3;--accent:#0f172a;--card:#fff;
+        --red:#991b1b;--redbg:#fef2f2;--amber:#92400e;--amberbg:#fffbeb;--green:#065f46;--greenbg:#ecfdf5}
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0}
+  body{background:var(--bg);color:var(--ink);font:16px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+       padding:calc(14px + env(safe-area-inset-top)) 16px calc(84px + env(safe-area-inset-bottom))}
+  .wrap{max-width:640px;margin:0 auto}
+  .top{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+  .top h1{font-size:21px;margin:0;letter-spacing:-.2px;flex:1}
+  .back{border:1px solid var(--line);background:#fff;border-radius:10px;padding:9px 12px;font-size:15px;font-weight:600;color:var(--accent)}
+  .sub{color:var(--muted);font-size:13.5px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:12px}
+  h2{font-size:12.5px;text-transform:uppercase;letter-spacing:.7px;color:var(--muted);margin:20px 0 8px;font-weight:700}
+  .tap{display:block;width:100%;text-align:left;background:var(--card);border:1px solid var(--line);border-radius:14px;
+       padding:15px;margin-bottom:10px;font:inherit;color:inherit;cursor:pointer}
+  .tap:active{background:#fbfaf8}
+  .tap .t{font-weight:650;font-size:16.5px;display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+  .chev{color:#b9b4ab;font-weight:700;flex:0 0 auto}
+  .meta{color:var(--muted);font-size:13.5px;margin-top:5px}
+  .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px}
+  .chip{font-size:12px;font-weight:650;padding:4px 9px;border-radius:99px;background:#eef1f5;color:#3b4757}
+  .chip.red{background:var(--redbg);color:var(--red)}
+  .chip.amber{background:var(--amberbg);color:var(--amber)}
+  .chip.green{background:var(--greenbg);color:var(--green)}
+  .kv{display:flex;justify-content:space-between;gap:14px;padding:10px 0;border-bottom:1px solid var(--line);font-size:15px}
+  .kv:last-child{border-bottom:0}
+  .kv .k{color:var(--muted)}
+  .kv .v{text-align:right;font-weight:600}
+  .banner{border-radius:12px;padding:12px 14px;font-size:14px;margin-bottom:12px}
+  .banner.amber{background:var(--amberbg);color:#7c2d12;border:1px solid #fde68a}
+  .banner.red{background:var(--redbg);color:#7f1d1d;border:1px solid #fecaca}
+  .banner.blue{background:#f1f5f9;color:#334155;border:1px solid #e2e8f0}
+  .banner.green{background:var(--greenbg);color:#064e3b;border:1px solid #a7f3d0}
+  .prose{font-size:15px;line-height:1.5;color:#252f3d;white-space:pre-wrap}
+  .err{background:var(--redbg);color:var(--red);border:1px solid #fecaca;border-radius:12px;padding:12px;font-size:14px;margin-top:10px}
+  .empty{color:var(--muted);font-size:14.5px;padding:6px 0}
+  label{display:block;font-size:13px;color:var(--muted);margin:12px 0 5px}
+  input{width:100%;padding:13px 12px;font-size:16px;border:1px solid var(--line);border-radius:10px;background:#fff}
+  button.primary{width:100%;padding:14px;font-size:16px;font-weight:650;border:0;border-radius:10px;background:var(--accent);color:#fff;margin-top:16px}
+  button.ghost{width:100%;padding:13px;font-size:15px;font-weight:600;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--accent);margin-top:10px}
+  button.link{border:0;background:none;color:#334155;font-size:14px;text-decoration:underline;padding:10px 0;width:100%}
+  button[disabled]{opacity:.55}
+  .foot{color:var(--muted);font-size:12px;text-align:center;margin-top:24px}
+  .hide{display:none!important}
+  .skeleton{height:16px;background:linear-gradient(90deg,#eeece8,#f6f4f1,#eeece8);border-radius:6px;margin:8px 0}
+  .tabbar{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--line);
+          display:flex;padding-bottom:env(safe-area-inset-bottom);z-index:20}
+  .tabbar button{flex:1;border:0;background:none;padding:10px 4px 9px;font:600 11.5px/1.2 inherit;color:var(--muted);cursor:pointer}
+  .tabbar button.on{color:var(--accent)}
+  .tabbar .dot{display:block;font-size:17px;margin-bottom:2px}
+  .sec{display:none}
+  .sec.on{display:block}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- AUTH -->
+  <div id="v-auth">
+    <div class="top"><h1>Air Butler Collective</h1></div>
+    <div class="sub" style="margin-bottom:16px">Employee portal</div>
+
+    <div id="paneSignin" class="card">
+      <label for="email">Email</label>
+      <input id="email" type="email" autocomplete="username" inputmode="email" placeholder="you@email.com">
+      <label for="pw">Password</label>
+      <input id="pw" type="password" autocomplete="current-password" placeholder="Your password">
+      <button class="primary" id="go">Sign in</button>
+      <button class="link" id="toForgot">Forgot your password?</button>
+      <div id="m0"></div>
+    </div>
+
+    <div id="paneForgot" class="card hide">
+      <div class="prose" style="margin-bottom:6px">Enter your work email. We send you a link to set a new password. After that you sign in normally, every time, no link needed.</div>
+      <label for="femail">Email</label>
+      <input id="femail" type="email" inputmode="email" placeholder="you@email.com">
+      <button class="primary" id="sendReset">Send me a reset link</button>
+      <button class="link" id="backSignin">Back to sign in</button>
+      <div id="m1"></div>
+    </div>
+
+    <div id="paneNewpw" class="card hide">
+      <div class="banner blue">Choose a new password for your account.</div>
+      <label for="npw1">New password</label>
+      <input id="npw1" type="password" autocomplete="new-password" placeholder="At least 8 characters">
+      <label for="npw2">Type it again</label>
+      <input id="npw2" type="password" autocomplete="new-password" placeholder="Same password">
+      <button class="primary" id="savePw">Save password</button>
+      <div id="m2"></div>
+    </div>
+
+    <div class="foot">Air Butler Collective LLC</div>
+  </div>
+
+  <!-- APP -->
+  <div id="v-app" class="hide">
+    <div class="top">
+      <div style="flex:1">
+        <h1 id="who">Welcome</h1>
+        <div class="sub" id="roleline"></div>
+      </div>
+    </div>
+
+    <div class="sec on" id="s-home"><div id="homeBody"><div class="skeleton"></div></div></div>
+    <div class="sec" id="s-schedule"><div id="schedBody"></div></div>
+    <div class="sec" id="s-missions"><div id="missionListBody"></div></div>
+    <div class="sec" id="s-dir"><div id="dirBody"></div></div>
+    <div class="sec" id="s-me"><div id="meBody"></div></div>
+
+    <div class="foot">Air Butler Collective LLC</div>
+  </div>
+
+  <!-- DETAIL VIEWS -->
+  <div id="v-mission" class="hide">
+    <div class="top"><button class="back" id="backMission">&larr; Back</button></div>
+    <div id="missionBody"></div>
+  </div>
+  <div id="v-order" class="hide">
+    <div class="top"><button class="back" id="backOrder">&larr; Back</button></div>
+    <div id="orderBody"></div>
+  </div>
+  <div id="v-incident" class="hide">
+    <div class="top"><button class="back" id="backIncident">&larr; Back</button></div>
+    <div id="incidentBody"></div>
+  </div>
+
+  <div class="tabbar hide" id="tabbar">
+    <button data-tab="home" class="on"><span class="dot">&#9679;</span>Today</button>
+    <button data-tab="schedule"><span class="dot">&#9633;</span>Schedule</button>
+    <button data-tab="missions"><span class="dot">&#9650;</span>Missions</button>
+    <button data-tab="dir"><span class="dot">&#9670;</span>Directory</button>
+    <button data-tab="me"><span class="dot">&#9675;</span>Me</button>
+  </div>
+
+</div>
+
+<script>
+var REF="xacwvpxfutczxsqxykiu";
+var ANON="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhhY3d2cHhmdXRjenhzcXh5a2l1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI2OTc0ODYsImV4cCI6MjA5ODI3MzQ4Nn0.a2MvwEYNFaR2gir3DfThl7N4fE2cZxQZX8ySSQc5a8E";
+var PORTAL="https://portal.airbutlercollective.com/";
+
+var TOKEN="", REFRESH="", PROFILE=null, ME={};
+var MISSIONS=[], READY={}, INCIDENTS=[], OPEN=[], VENDORS=[], CREW=[], ORDERS=[], EVENTS=[], ASSIGN=[];
+var TAB="home", HIST=[];
+
+function $(id){return document.getElementById(id)}
+function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]})}
+function view(v){["v-auth","v-app","v-mission","v-order","v-incident"].forEach(function(x){$(x).classList.add("hide")});$(v).classList.remove("hide");window.scrollTo(0,0)}
+function fmt(iso){if(!iso)return "not set";try{var d=new Date(iso);return d.toLocaleString([],{weekday:"short",month:"short",day:"numeric",hour:"numeric",minute:"2-digit"})}catch(e){return iso}}
+function dayKey(iso){try{var d=new Date(iso);return d.toDateString()}catch(e){return "No date"}}
+function chip(t,k){return '<span class="chip'+(k?" "+k:"")+'">'+esc(t)+'</span>'}
+function kind(s){s=(s||"").toLowerCase();
+  if(s==="blocked"||s==="failed"||s==="red"||s==="declined"||s==="overdue")return "red";
+  if(s==="planned"||s==="orange"||s==="attention"||s==="pending"||s==="submitted"||s==="requested")return "amber";
+  if(s==="complete"||s==="green"||s==="cleared"||s==="verified"||s==="confirmed"||s==="delivered")return "green";return ""}
+function vendorName(id){var x=VENDORS.filter(function(v){return String(v.id)===String(id)})[0];return x?x.name:"Vendor "+id}
+function ordersFor(m){return ORDERS.filter(function(o){return String(o.mission_id)===String(m)})}
+function eventsFor(o){return EVENTS.filter(function(e){return String(e.order_id)===String(o)})}
+function assignFor(m){return ASSIGN.filter(function(a){return String(a.mission_id)===String(m)})}
+function say(box,msg,cls){$(box).innerHTML='<div class="banner '+(cls||"blue")+'">'+esc(msg)+'</div>'}
+function errbox(box,msg){$(box).innerHTML='<div class="err">'+esc(msg)+'</div>'}
+
+/* ---------- session storage: stays signed in across visits ---------- */
+function saveSession(){
+  try{localStorage.setItem("abc_refresh",REFRESH);localStorage.setItem("abc_access",TOKEN);localStorage.setItem("abc_at",String(Date.now()))}catch(e){}
+}
+function clearSession(){
+  try{localStorage.removeItem("abc_refresh");localStorage.removeItem("abc_access");localStorage.removeItem("abc_at")}catch(e){}
+}
+function savedRefresh(){try{return localStorage.getItem("abc_refresh")||""}catch(e){return ""}}
+
+/* ---------- auth ---------- */
+async function signIn(email,pw){
+  var r=await fetch("https://"+REF+".supabase.co/auth/v1/token?grant_type=password",{
+    method:"POST",headers:{apikey:ANON,"Content-Type":"application/json"},
+    body:JSON.stringify({email:email,password:pw})});
+  var d=await r.json().catch(function(){return {}});
+  if(!d.access_token){
+    var m=d.error_description||d.msg||d.error||"Sign in failed.";
+    if(/invalid/i.test(m))throw new Error("That email and password did not match. If you are unsure of your password, tap Forgot your password.");
+    throw new Error(m);
+  }
+  TOKEN=d.access_token; REFRESH=d.refresh_token||""; saveSession();
+}
+async function refreshSession(){
+  var rt=savedRefresh()||REFRESH;
+  if(!rt)return false;
+  var r=await fetch("https://"+REF+".supabase.co/auth/v1/token?grant_type=refresh_token",{
+    method:"POST",headers:{apikey:ANON,"Content-Type":"application/json"},
+    body:JSON.stringify({refresh_token:rt})});
+  var d=await r.json().catch(function(){return {}});
+  if(!d.access_token)return false;
+  TOKEN=d.access_token; REFRESH=d.refresh_token||rt; saveSession(); return true;
+}
+async function setPassword(newPw){
+  var r=await fetch("https://"+REF+".supabase.co/auth/v1/user",{
+    method:"PUT",headers:{apikey:ANON,"Authorization":"Bearer "+TOKEN,"Content-Type":"application/json"},
+    body:JSON.stringify({password:newPw})});
+  if(!r.ok){var t=await r.text();throw new Error("Could not save the password. "+(t||""))}
+  return true;
+}
+
+$("go").onclick=async function(){
+  var e=$("email").value.trim().toLowerCase(), p=$("pw").value;
+  if(!e||!p){errbox("m0","Enter your email and password.");return}
+  $("go").disabled=true; say("m0","Signing you in...","blue");
+  try{await signIn(e,p); await start();}
+  catch(ex){$("go").disabled=false; errbox("m0",ex.message)}
+};
+
+$("toForgot").onclick=function(){$("paneSignin").classList.add("hide");$("paneForgot").classList.remove("hide");$("femail").value=$("email").value||""};
+$("backSignin").onclick=function(){$("paneForgot").classList.add("hide");$("paneSignin").classList.remove("hide")};
+
+$("sendReset").onclick=async function(){
+  var e=$("femail").value.trim().toLowerCase();
+  if(!e){errbox("m1","Enter your email first.");return}
+  $("sendReset").disabled=true; say("m1","Sending...","blue");
+  try{
+    var r=await fetch("https://"+REF+".supabase.co/auth/v1/recover",{
+      method:"POST",headers:{apikey:ANON,"Content-Type":"application/json"},
+      body:JSON.stringify({email:e,redirect_to:PORTAL})});
+    if(!r.ok)throw new Error("The reset request did not go through. Tell Kai.");
+    say("m1","Sent. Check your email for the reset link, tap it, set a new password, then sign in normally.","green");
+  }catch(ex){errbox("m1",ex.message)}
+  $("sendReset").disabled=false;
+};
+
+$("savePw").onclick=async function(){
+  var a=$("npw1").value, b=$("npw2").value;
+  if(a.length<8){errbox("m2","Use at least eight characters.");return}
+  if(a!==b){errbox("m2","The two passwords do not match.");return}
+  $("savePw").disabled=true; say("m2","Saving...","blue");
+  try{await setPassword(a); clearSession(); TOKEN="";REFRESH="";
+      say("m2","Password saved. Signing you in...","green");
+      await signIn((new URLSearchParams(location.search).get("email")||$("email").value||"").trim(), a).catch(function(){});
+      if(TOKEN){await start();}else{$("paneNewpw").classList.add("hide");$("paneSignin").classList.remove("hide");say("m0","Password saved. Sign in with your new password.","green")}
+  }catch(ex){errbox("m2",ex.message)}
+  $("savePw").disabled=false;
+};
+
+/* ---------- data ---------- */
+async function apiGET(table,params,prof){
+  var r=await fetch("https://"+REF+".supabase.co/rest/v1/"+table+"?"+(params||""),{
+    headers:{"apikey":ANON,"Authorization":"Bearer "+TOKEN,"Accept-Profile":(prof||"mission_control")}});
+  if(r.status===401){var e=new Error("expired");e.code=401;throw e}
+  if(!r.ok)throw new Error(table+" failed ("+r.status+")");
+  return await r.json();
+}
+
+async function start(){
+  view("v-app"); $("tabbar").classList.remove("hide");
+  $("homeBody").innerHTML='<div class="skeleton"></div><div class="skeleton" style="width:65%"></div>';
+  try{
+    var res=await Promise.all([
+      apiGET("missions","select=*&order=id.asc"),
+      apiGET("mission_readiness","select=*"),
+      apiGET("incidents","select=*&order=occurred_at.desc"),
+      apiGET("open_items","select=*"),
+      apiGET("vendors","select=*&order=name.asc"),
+      apiGET("crew","select=*&order=name.asc"),
+      apiGET("orders","select=*&order=id.desc"),
+      apiGET("order_events","select=*&order=at.desc"),
+      apiGET("mission_assignments","select=*"),
+      apiGET("profiles","select=*")
+    ]);
+    MISSIONS=res[0]||[]; READY={}; (res[1]||[]).forEach(function(r){READY[r.mission_id]=r});
+    INCIDENTS=res[2]||[]; OPEN=res[3]||[]; VENDORS=res[4]||[]; CREW=res[5]||[];
+    ORDERS=res[6]||[]; EVENTS=res[7]||[]; ASSIGN=res[8]||[];
+    var profs=res[9]||[];
+    ME=profs.filter(function(p){return String(p.user_id)===String(currentUid())})[0]||profs[0]||{};
+    PROFILE=ME.role||"staff";
+    $("who").textContent="Welcome, "+(ME.display_name||"");
+    $("roleline").textContent=PROFILE;
+    renderAll();
+  }catch(ex){
+    if(ex.code===401){var ok=await refreshSession();if(ok){return start()}
+      clearSession();gotoAuth("Your session ended. Sign in again.");return}
+    $("homeBody").innerHTML='<div class="err">Could not load your work. '+esc(ex.message)+'</div>';
+  }
+}
+function currentUid(){
+  try{var p=JSON.parse(atob(TOKEN.split(".")[1]));return p.sub}catch(e){return ""}
+}
+
+/* ---------- render ---------- */
+function renderAll(){renderHome();renderSchedule();renderMissions();renderDir();renderMe()}
+
+function renderHome(){
+  var h="";
+  var attn=INCIDENTS.filter(function(i){return (i.status||"open").toLowerCase()==="open"});
+  var openOrd=ORDERS.filter(function(o){return ["confirmed","delivered","complete","cancelled","declined"].indexOf((o.state||"").toLowerCase())<0});
+  h+='<div class="card"><div class="kv"><span class="k">Open incidents</span><span class="v">'+attn.length+'</span></div>'+
+     '<div class="kv"><span class="k">Orders awaiting confirmation</span><span class="v">'+openOrd.length+'</span></div>'+
+     '<div class="kv"><span class="k">Missions in system</span><span class="v">'+MISSIONS.length+'</span></div></div>';
+  h+='<h2>Needs attention</h2>';
+  if(attn.length){attn.forEach(function(i){
+    h+='<button class="tap" data-inc="'+esc(i.id)+'"><div class="t"><span>'+esc(i.title||"Open incident")+'</span><span class="chev">&rsaquo;</span></div><div class="meta">'+esc((i.what_happened||"").slice(0,110))+'</div><div class="chips">'+chip(i.severity||"attention",kind(i.severity||"attention"))+'</div></button>';
+  })} else h+='<div class="card"><div class="empty">Nothing needs your attention.</div></div>';
+  h+='<h2>Orders awaiting confirmation</h2>';
+  if(openOrd.length){openOrd.forEach(function(o){
+    var m=MISSIONS.filter(function(x){return String(x.id)===String(o.mission_id)})[0];
+    h+='<button class="tap" data-order="'+esc(o.id)+'"><div class="t"><span>'+esc(o.service||"Order "+o.id)+'</span><span class="chev">&rsaquo;</span></div><div class="meta">'+esc(vendorName(o.vendor_id))+(m?' - '+esc(m.label||m.id):'')+'</div><div class="chips">'+chip(o.state||"submitted",kind(o.state))+(o.due_at?chip("due "+fmt(o.due_at)):'')+'</div></button>';
+  })} else h+='<div class="card"><div class="empty">No orders waiting.</div></div>';
+  $("homeBody").innerHTML=h; bindTaps();
+}
+
+function renderSchedule(){
+  var withDates=MISSIONS.filter(function(m){return m.departs_at}).sort(function(a,b){return new Date(a.departs_at)-new Date(b.departs_at)});
+  var noDates=MISSIONS.filter(function(m){return !m.departs_at});
+  var h="";
+  if(withDates.length){
+    var last=null;
+    withDates.forEach(function(m){
+      var d=dayKey(m.departs_at);
+      if(d!==last){h+='<h2>'+esc(d)+'</h2>';last=d}
+      h+=missionCard(m);
+    });
+  }
+  if(noDates.length){
+    h+='<h2>No date set</h2>';
+    noDates.forEach(function(m){h+=missionCard(m)});
+  }
+  if(!MISSIONS.length)h='<div class="card"><div class="empty">No missions scheduled.</div></div>';
+  $("schedBody").innerHTML=h; bindTaps();
+}
+function missionCard(m){
+  var r=READY[m.id]||{}, o=ordersFor(m.id);
+  var chips=chip(m.status||"planned",kind(m.status));
+  if(m.is_example)chips+=chip("rehearsal","amber");
+  if(o.length)chips+=chip(o.length+" order"+(o.length>1?"s":""));
+  if(m.operator_confirmed)chips+=chip("operator confirmed","green");else chips+=chip("operator not confirmed","red");
+  return '<button class="tap" data-mission="'+esc(m.id)+'"><div class="t"><span>'+esc(m.label||("Mission "+m.id))+'</span><span class="chev">&rsaquo;</span></div>'+
+         '<div class="meta">'+esc(m.origin||"?")+' to '+esc(m.destination||"?")+' - '+esc(fmt(m.departs_at))+'</div><div class="chips">'+chips+'</div></button>';
+}
+
+function renderMissions(){ $("missionListBody").innerHTML=(MISSIONS.length?MISSIONS.map(missionCard).join(""):'<div class="card"><div class="empty">No missions in the system.</div></div>'); bindTaps() }
+
+function renderDir(){
+  var h='<h2>Vendors ('+VENDORS.length+')</h2><div class="card">';
+  h+=VENDORS.length?VENDORS.map(function(v){return '<div class="kv"><span class="k">'+esc(v.name)+'</span><span class="v">'+esc(v.category||"")+'</span></div>'}).join(""):'<div class="empty">No vendors on file.</div>';
+  h+='</div><h2>Crew ('+CREW.length+')</h2><div class="card">';
+  h+=CREW.length?CREW.map(function(c){return '<div class="kv"><span class="k">'+esc(c.name)+'<div class="meta">'+esc(c.crew_role||"")+'</div></span><span class="v">'+chip(c.status||"unverified",kind(c.status||""))+'</span></div>'}).join(""):'<div class="empty">No crew on file.</div>';
+  h+='</div>';
+  $("dirBody").innerHTML=h;
+}
+
+function renderMe(){
+  var h='<h2>Account</h2><div class="card">';
+  h+='<div class="kv"><span class="k">Name</span><span class="v">'+esc(ME.display_name||"")+'</span></div>';
+  h+='<div class="kv"><span class="k">Role</span><span class="v">'+esc(PROFILE)+'</span></div>';
+  h+='</div>';
+  h+='<button class="ghost" id="changePw">Change my password</button>';
+  h+='<button class="ghost" id="signOutBtn">Sign out</button>';
+  h+='<div class="meta" style="margin-top:14px;text-align:center">You stay signed in on this device until you sign out.</div>';
+  $("meBody").innerHTML=h;
+  $("signOutBtn").onclick=function(){TOKEN="";REFRESH="";ME={};clearSession();gotoAuth("Signed out.")};
+  $("changePw").onclick=function(){clearSession();try{TOKEN="";REFRESH=""}catch(e){}
+    $("femail").value="";$("paneSignin").classList.add("hide");$("paneForgot").classList.remove("hide");view("v-auth");
+    say("m1","Enter your email and we send you a link to set a new password.","blue")};
+}
+
+/* ---------- detail ---------- */
+function openMission(id){
+  var m=MISSIONS.filter(function(x){return String(x.id)===String(id)})[0]; if(!m)return;
+  var r=READY[m.id]||{}, h="";
+  if(m.is_example)h+='<div class="banner amber">Rehearsal example, not a live mission. No real passenger is involved.</div>';
+  h+='<h1 style="font-size:19px;margin:0 0 4px">'+esc(m.label||("Mission "+m.id))+'</h1><div class="sub" style="margin-bottom:12px">'+chip(m.status||"planned",kind(m.status))+'</div>';
+  h+='<div class="card">'+
+     '<div class="kv"><span class="k">Route</span><span class="v">'+esc(m.origin||"?")+' to '+esc(m.destination||"?")+'</span></div>'+
+     '<div class="kv"><span class="k">Departs</span><span class="v">'+esc(fmt(m.departs_at))+'</span></div>'+
+     '<div class="kv"><span class="k">Arrives</span><span class="v">'+esc(fmt(m.arrives_at))+'</span></div>'+
+     '<div class="kv"><span class="k">Operator confirmed</span><span class="v">'+(m.operator_confirmed?"Yes":"No")+'</span></div>'+
+     '</div>';
+  h+='<h2>Readiness</h2><div class="card">';
+  h+=Object.keys(r).length?
+     '<div class="kv"><span class="k">Open orders</span><span class="v">'+(r.open_orders||0)+'</span></div>'+
+     '<div class="kv"><span class="k">Verified green</span><span class="v">'+(r.verified_green_orders||0)+'</span></div>'+
+     '<div class="kv"><span class="k">Failed orders</span><span class="v">'+(r.failed_orders||0)+'</span></div>'+
+     '<div class="kv"><span class="k">Crew assigned</span><span class="v">'+(r.assignments||0)+'</span></div>'+
+     '<div class="kv"><span class="k">Blocking incidents</span><span class="v">'+(r.blocking_incidents||0)+'</span></div>'
+     :'<div class="empty">No readiness record yet.</div>';
+  h+='</div>';
+  if(m.notes)h+='<h2>Notes</h2><div class="card"><div class="prose">'+esc(m.notes)+'</div></div>';
+  var ords=ordersFor(m.id);
+  h+='<h2>Vendor orders ('+ords.length+')</h2>';
+  if(ords.length){ords.forEach(function(o){
+    var ev=eventsFor(o.id), last=ev[0];
+    h+='<button class="tap" data-order="'+esc(o.id)+'"><div class="t"><span>'+esc(o.service||"Order "+o.id)+'</span><span class="chev">&rsaquo;</span></div>'+
+       '<div class="meta">'+esc(vendorName(o.vendor_id))+'</div><div class="chips">'+chip(o.state||"submitted",kind(o.state))+(o.due_at?chip("due "+fmt(o.due_at)):'')+'</div>'+
+       (last?'<div class="meta">Last: '+esc(last.state||"")+' '+esc(fmt(last.at))+'</div>':'')+'</button>';
+  })}else h+='<div class="card"><div class="empty">No orders placed for this mission yet.</div></div>';
+  var asg=assignFor(m.id);
+  h+='<h2>Crew assigned ('+asg.length+')</h2>';
+  if(asg.length){h+='<div class="card">'+asg.map(function(a){return '<div class="kv"><span class="k">'+esc(a.crew_name||a.name||("Crew "+a.crew_id))+'</span><span class="v">'+esc(a.role||a.crew_role||"")+'</span></div>'}).join("")+'</div>'}
+  else h+='<div class="card"><div class="empty">No crew linked to this mission in the system yet.</div></div>';
+  var rel=INCIDENTS.filter(function(i){return String(i.mission_id)===String(m.id)});
+  h+='<h2>Incidents on this mission</h2>';
+  if(rel.length){rel.forEach(function(i){h+='<button class="tap" data-inc="'+esc(i.id)+'"><div class="t"><span>'+esc(i.title||"Incident")+'</span><span class="chev">&rsaquo;</span></div><div class="chips">'+chip(i.severity||"",kind(i.severity||""))+'</div></button>'})}
+  else h+='<div class="card"><div class="empty">None recorded.</div></div>';
+  $("missionBody").innerHTML=h;
+  $("backMission").onclick=function(){view("v-app")};
+  bindTaps(); view("v-mission");
+}
+
+function openOrder(id){
+  var o=ORDERS.filter(function(x){return String(x.id)===String(id)})[0]; if(!o)return;
+  var m=MISSIONS.filter(function(x){return String(x.id)===String(o.mission_id)})[0];
+  var ev=eventsFor(o.id), h="";
+  h+='<h1 style="font-size:19px;margin:0 0 4px">'+esc(o.service||("Order "+o.id))+'</h1><div class="sub" style="margin-bottom:12px">'+esc(vendorName(o.vendor_id))+'</div>';
+  h+='<div class="chips" style="margin-bottom:12px">'+chip(o.state||"submitted",kind(o.state))+(o.status_color?chip(o.status_color,kind(o.status_color)):'')+'</div>';
+  h+='<div class="card">'+
+     '<div class="kv"><span class="k">Mission</span><span class="v">'+esc(m?(m.label||m.id):"not linked")+'</span></div>'+
+     '<div class="kv"><span class="k">Due</span><span class="v">'+esc(fmt(o.due_at))+'</span></div>'+
+     '<div class="kv"><span class="k">Confirmed</span><span class="v">'+esc(o.confirmed_at?fmt(o.confirmed_at):"not yet")+'</span></div>'+
+     '<div class="kv"><span class="k">Written confirmation</span><span class="v">'+(o.written_confirmation?"Yes":"No")+'</span></div>'+
+     '<div class="kv"><span class="k">Delivery</span><span class="v">'+esc(o.delivery_location||"not set")+'</span></div>'+
+     '<div class="kv"><span class="k">Responsible</span><span class="v">'+esc(o.responsible||"not assigned")+'</span></div>'+
+     '<div class="kv"><span class="k">Channel</span><span class="v">'+esc(o.order_channel||"not set")+'</span></div>'+
+     '</div>';
+  if(o.dietary_instructions||o.allergy_instructions){
+    h+='<h2>Food notes</h2><div class="card">';
+    if(o.dietary_instructions)h+='<div class="kv"><span class="k">Dietary</span><span class="v">'+esc(o.dietary_instructions)+'</span></div>';
+    if(o.allergy_instructions)h+='<div class="kv"><span class="k">Allergies</span><span class="v">'+esc(o.allergy_instructions)+'</span></div>';
+    h+='</div>';
+  }
+  if(o.notes)h+='<h2>Notes</h2><div class="card"><div class="prose">'+esc(o.notes)+'</div></div>';
+  h+='<h2>History ('+ev.length+')</h2>';
+  h+=ev.length?'<div class="card">'+ev.map(function(e){
+    return '<div class="kv"><span class="k">'+esc(e.state||"")+'<div class="meta">'+esc(fmt(e.at))+'</div></span><span class="v">'+esc(e.by_name||e.by_role||"")+'</span></div>'+(e.note?'<div class="meta" style="padding-bottom:8px">'+esc(e.note)+'</div>':'');
+  }).join("")+'</div>':'<div class="card"><div class="empty">No history recorded yet.</div></div>';
+  $("orderBody").innerHTML=h;
+  $("backOrder").onclick=function(){o.mission_id?openMission(o.mission_id):view("v-app")};
+  view("v-order");
+}
+
+function openIncident(id){
+  var i=INCIDENTS.filter(function(x){return String(x.id)===String(id)})[0]; if(!i)return;
+  var m=i.mission_id?MISSIONS.filter(function(x){return String(x.id)===String(i.mission_id)})[0]:null;
+  var h='<h1 style="font-size:19px;margin:0 0 4px">'+esc(i.title||"Incident")+'</h1>';
+  h+='<div class="sub" style="margin-bottom:12px">'+chip(i.severity||"",kind(i.severity||""))+chip(i.status||"open",kind(i.status||"open"))+'</div>';
+  h+='<div class="banner '+(kind(i.severity)==="red"?"red":"amber")+'">'+esc(i.what_happened||"")+'</div>';
+  h+='<div class="card">'+
+     '<div class="kv"><span class="k">Occurred</span><span class="v">'+esc(fmt(i.occurred_at))+'</span></div>'+
+     '<div class="kv"><span class="k">Service</span><span class="v">'+esc(i.service||"not recorded")+'</span></div>'+
+     '<div class="kv"><span class="k">Mission</span><span class="v">'+esc(m?(m.label||m.id):"not linked")+'</span></div>'+
+     '<div class="kv"><span class="k">Owner</span><span class="v">'+esc(i.responsible_name||i.owner||"not assigned")+'</span></div>'+
+     '</div>';
+  $("incidentBody").innerHTML=h;
+  $("backIncident").onclick=function(){view("v-app")};
+  view("v-incident");
+}
+
+function bindTaps(){
+  Array.prototype.forEach.call(document.querySelectorAll("[data-mission]"),function(b){b.onclick=function(){openMission(b.getAttribute("data-mission"))}});
+  Array.prototype.forEach.call(document.querySelectorAll("[data-order]"),function(b){b.onclick=function(){openOrder(b.getAttribute("data-order"))}});
+  Array.prototype.forEach.call(document.querySelectorAll("[data-inc]"),function(b){b.onclick=function(){openIncident(b.getAttribute("data-inc"))}});
+}
+
+/* ---------- tabs ---------- */
+Array.prototype.forEach.call(document.querySelectorAll("#tabbar button"),function(b){
+  b.onclick=function(){
+    TAB=b.getAttribute("data-tab");
+    Array.prototype.forEach.call(document.querySelectorAll("#tabbar button"),function(x){x.classList.remove("on")});
+    b.classList.add("on");
+    Array.prototype.forEach.call(document.querySelectorAll(".sec"),function(s){s.classList.remove("on")});
+    $("s-"+TAB).classList.add("on");
+    window.scrollTo(0,0);
+  };
+});
+
+function gotoAuth(msg){
+  $("tabbar").classList.add("hide"); view("v-auth");
+  $("paneNewpw").classList.add("hide"); $("paneForgot").classList.add("hide"); $("paneSignin").classList.remove("hide");
+  if(msg)say("m0",msg,"blue"); else $("m0").innerHTML="";
+  $("go").disabled=false;
+}
+
+/* ---------- boot ---------- */
+(async function(){
+  // 1. recovery / magic link return: tokens arrive in the hash
+  var hsh=(location.hash||"").replace(/^#/,"");
+  if(hsh){
+    var p={}; hsh.split("&").forEach(function(kv){var a=kv.split("=");p[decodeURIComponent(a[0])]=decodeURIComponent(a[1]||"")});
+    if(p.error_description){gotoAuth("That link did not work. Request a new reset link.");}
+    else if(p.access_token&&p.type==="recovery"){TOKEN=p.access_token;REFRESH=p.refresh_token||"";saveSession();
+      try{history.replaceState(null,"",location.pathname+location.search)}catch(e){}
+      $("paneSignin").classList.add("hide");$("paneForgot").classList.add("hide");$("paneNewpw").classList.remove("hide");view("v-auth");return;}
+    else if(p.access_token){TOKEN=p.access_token;REFRESH=p.refresh_token||"";saveSession();
+      try{history.replaceState(null,"",location.pathname+location.search)}catch(e){}
+      await start();return;}
+  }
+  // 2. returning employee: silent refresh, no link needed
+  if(savedRefresh()){
+    try{var ok=await refreshSession(); if(ok){await start();return}}catch(e){}
+  }
+  gotoAuth("");
+})();
+</script>
+</body>
+</html>
