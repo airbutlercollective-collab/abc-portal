@@ -136,7 +136,7 @@ function readinessColor(m){var r=S.ready[m.id];return (r&&r.color)||(m.status===
 
 /* ---------------- auth ---------------- */
 function saveSess(s){S.sess=s;try{localStorage.setItem(SKEY,JSON.stringify(s))}catch(e){}}
-function loadSess(){try{var r=localStorage.getItem(SKEY);if(r)return JSON.parse(r);var k=null;for(var i=0;i<localStorage.length;i++){var kk=localStorage.key(i);if(/^sb-.*-auth-token$/.test(kk)){k=kk;break}}if(k){var v=JSON.parse(localStorage.getItem(k)||"{}"),s=v&&(v.currentSession||v);if(s&&s.access_token){var o={access_token:s.access_token,refresh_token:s.refresh_token,expires_at:s.expires_at,user:s.user};localStorage.setItem(SKEY,JSON.stringify(o));return o}}}catch(e){}return null}
+function loadSess(){try{var r=localStorage.getItem(SKEY);if(r)return JSON.parse(r);var k=null;for(var i=0;i<localStorage.length;i++){var kk=localStorage.key(i);if(/^sb-.*-auth-token$/.test(kk)){k=kk;break}}if(k){var v=JSON.parse(localStorage.getItem(k)||"{}"),s=v&&(v.currentSession||v);if(s&&s.access_token){var o={access_token:s.access_token,refresh_token:s.refresh_token,expires_at:s.expires_at,user:s.user};localStorage.setItem(SKEY,JSON.stringify(o));return o}}var aa=localStorage.getItem("abc_access"),ar=localStorage.getItem("abc_refresh");if(aa&&ar){var o2={access_token:aa,refresh_token:ar,expires_at:null,user:null};localStorage.setItem(SKEY,JSON.stringify(o2));return o2}}catch(e){}return null}
 function clearSess(){S.sess=null;try{localStorage.removeItem(SKEY)}catch(e){}}
 
 async function authPost(path,body,extra){
