@@ -397,15 +397,15 @@ swap("in",351,243);
 var SB_URL="https://xacwvpxfutczxsqxykiu.supabase.co",SB_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhhY3d2cHhmdXRjenhzcXh5a2l1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI2OTc0ODYsImV4cCI6MjA5ODI3MzQ4Nn0.a2MvwEYNFaR2gir3DfThl7N4fE2cZxQZX8ySSQc5a8E";
 function sbq(){return LIVE.sb.schema("mission_control")}
 function fr(m){m=String(m||"");return /confirmed_needs_writing/.test(m)?"you can't confirm without the vendor's written confirmation":/not approved/.test(m)?"that vendor is not approved for orders":/invalid order change/.test(m)?"that change isn't allowed for your role":/row-level security/.test(m)?"your role isn't allowed to do that":m}
-async function liveBoot(){try{if(!window.supabase||SB_KEY.indexOf("PASTE")==0)return;
+async function liveBoot(){try{document.title="S1 start";if(!window.supabase||SB_KEY.indexOf("PASTE")==0)return;
 var ctl=new AbortController(),to=setTimeout(function(){ctl.abort()},4000);
 clearTimeout(to);
 LIVE.sb=window.supabase.createClient(SB_URL,SB_KEY);
 LIVE.sb.auth.onAuthStateChange(function(ev,s){if(s&&!LIVE.on)liveSession()});
-var s=(await LIVE.sb.auth.getSession()).data.session;
+var s=(await LIVE.sb.auth.getSession()).data.session;document.title="S2 sess="+(s?"yes":"no")+" keys="+String(localStorage.getItem("abc_access")?"A":"-")+String(localStorage.getItem("abc_refresh")?"R":"-");
 if(!s){try{var hz=JSON.parse(localStorage.getItem("abc.portal.sess.v1")||"null");if(hz&&hz.access_token){var ad=await LIVE.sb.auth.setSession({access_token:hz.access_token,refresh_token:hz.refresh_token});s=(ad.data||{}).session||null}}catch(e3){}}
 if(!s){try{var aa=localStorage.getItem("abc_access"),ar=localStorage.getItem("abc_refresh");if(aa&&ar){var ad2=await LIVE.sb.auth.setSession({access_token:aa,refresh_token:ar});s=(ad2.data||{}).session||null}}catch(e4){}}
-if(s)await liveSession();else showLogin()}catch(e){}}
+document.title="S3 s="+(s?"yes":"no");if(s)await liveSession();else showLogin()}catch(e){document.title="ERR "+e.message}}
 function showLogin(msg){var d=document.getElementById("login");d.style.display="block";d.innerHTML='<b>Sign in to Mission Control</b><div style="margin:4px 0 8px;color:#8fa3c7">Use your own email. You get a one-time link. Nobody shares a login.</div><input id="lem" type="email" placeholder="you@email.com" autocomplete="email"><button class="cb" onclick="liveLink()">EMAIL ME A SIGN-IN LINK</button><div id="lmsg" style="margin-top:8px">'+esc(msg||"")+"</div>"}
 async function liveLink(){var e=document.getElementById("lem").value.trim().toLowerCase();if(!e)return;var r=await LIVE.sb.auth.signInWithOtp({email:e,options:{emailRedirectTo:location.href.split("#")[0].split("?")[0]}});document.getElementById("lmsg").textContent=r.error?"Couldn't send: "+r.error.message:"Check your email for your sign-in link."}
 async function liveOut(){await LIVE.sb.auth.signOut();location.reload()}
