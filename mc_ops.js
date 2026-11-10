@@ -23,7 +23,8 @@ MC.load=function(){
     MC.ready=true;MC.err='';MC.wxLoad();MC.updateScene();if(MC.open)MC.rerender();MC.hash();return true;
   }).catch(function(e){MC.err=e.message||'load failed';return false});
 };
-function missionsActive(){return q('missions').filter(function(m){return ACTIVE.indexOf(s(m.status).toLowerCase())>-1})}
+function missionsActive(){return q('missions').filter(function(m){return ACTIVE.indexOf(s(m.status).toLowerCase())>-1})
+  .sort(function(a,b){var A=a.departs_at?new Date(a.departs_at).getTime():8.64e15,B=b.departs_at?new Date(b.departs_at).getTime():8.64e15;if(A!==B)return A-B;return (+a.id)-(+b.id)})}
 function readiness(id){return q('readiness').filter(function(r){return String(r.mission_id)===String(id)})[0]||null}
 function vendorsMap(){var m={};q('vendors').forEach(function(v){m[String(v.id)]=v});return m}
 function airMap(){var m={};q('airports').forEach(function(a){m[s(a.code)]=a});return m}
@@ -37,6 +38,7 @@ MC.wxLoad=function(){
 };
 function wxLabel(c){c=+c;if(c===0)return 'CLEAR';if(c<=2)return 'MOSTLY CLEAR';if(c===3)return 'OVERCAST';if(c>=45&&c<=48)return 'FOG';if(c>=51&&c<=57)return 'DRIZZLE';if(c>=61&&c<=67)return 'RAIN';if(c>=71&&c<=77)return 'SNOW';if(c>=80&&c<=82)return 'SHOWERS';if(c>=95)return 'STORMS';return 'MIXED'}
 function wx(c){var w=MC.wx[c];return w?(w.label+' / '+w.t+'\u00B0C'):(c?'weather loading':'no airport code')}
+function code(m){var w=s(shortName(m)).replace(/[^A-Za-z0-9 ]/g,' ').trim().split(/\s+/);if(w.length>1)return (w[0][0]+w[1][0]).toUpperCase();return s(w[0]).slice(0,2).toUpperCase()}
 function clip(t,n){t=s(t);return t.length>n?t.slice(0,n-1)+'\u2026':t}
 function shortName(m){return s(m.label).replace(/\s*\(EXAMPLE[^)]*\)/i,'').replace(/\s*\(not a real mission[^)]*\)/i,'').trim()||('MISSION '+m.id)}
 function colOf(m){var rd=readiness(m.id)||{};if(rd.color)return rd.color;var st=s(m.status).toLowerCase();if(st==='blocked')return 'red';if(st==='planned'||st==='submitted')return 'orange';return 'green'}
@@ -91,6 +93,7 @@ MC.seats=function(a){
     r.setAttribute('stroke',mis?'rgba(255,255,255,.55)':'rgba(143,163,199,.45)');
     r.setAttribute('stroke-width','.7');r.setAttribute('class','seatrect s-'+ (mis?colOf(mis):'off'));
     n.appendChild(r);
+    if(mis){var cd=code(mis);var ct=document.createElementNS(ns,'text');ct.setAttribute('x',x+11);ct.setAttribute('y',y+7.4);ct.setAttribute('text-anchor','middle');ct.setAttribute('style','font-size:6px;font-weight:700;fill:#07101f;letter-spacing:.04em');ct.textContent=cd;n.appendChild(ct)}
     var tt=document.createElementNS(ns,'title');
     tt.textContent='SEAT '+(i+1)+(mis?' · '+shortName(mis)+' · '+statusWord(readiness(mis.id)||{},mis).toUpperCase():' · open');
     n.appendChild(tt);
@@ -127,7 +130,7 @@ MC.decorate=function(a,list){
     else if(v==='STATUS \u00B7 NOT LOADED'||v==='STATUS \u00B7 NOT LOADED'||v==='LIVE \u00B7 FROM DATABASE')t.textContent=MC.ready?'LIVE \u00B7 FROM DATABASE':'SIGN IN TO LOAD DATA';
   }
 };
-MC.selftest=function(){try{var g=document.querySelector('#w .nd.seat')||document.querySelector('.nd.seat');if(!g){document.title='SELFTEST no-seat';return}var h=g.__go||g.onclick;if(!h){document.title='SELFTEST seat-not-wired';return}h();setTimeout(function(){var sh=document.getElementById('sheet');document.title='SELFTEST '+(sh&&sh.className.indexOf('on')>-1?'seat-opens-sheet':'seat-no-sheet')+' | '+((document.getElementById('sht')||{}).textContent||'').slice(0,40);},400);}catch(e){document.title='SELFTEST err '+e.message}};
+MC.selftest=function(){try{var seats=[].slice.call(document.querySelectorAll('.nd.seat'));if(!seats.length){document.title='SEAT CHECK no-seats';return}var expect=[],got=[],i=0;function step(){ if(i>=seats.length){var pass=expect.length&&expect.every(function(e,k){return got[k]===e});  document.title='SEAT CHECK '+(expect.length?((pass?'PASS ':'FAIL ')+expect.length+'/'+expect.length):'no-occupied-seats')+' :: '+expect.join(' , ');return} var el=seats[i],lab=el.getAttribute('aria-label')||'';i++; if(/open/i.test(lab)){return step()} var want=lab.replace(/^Seat \d+ /,''); var fn=el.__go||el.onclick;if(!fn){document.title='SEAT CHECK seat-not-wired';return} fn(); var head=((document.getElementById('sht')||{}).textContent||''); var sh=document.getElementById('sheet'); expect.push(want);got.push(sh&&sh.className.indexOf('on')>-1&&head.indexOf(want)>-1?want:'MISMATCH:'+head.slice(0,30)); MC.close();setTimeout(step,30);}step();}catch(e){document.title='SEAT CHECK err '+e.message}};
 MC.hash=function(){try{var h=s(location.hash).replace('#','');var v='';var mm=s(location.search).match(/[?&]view=([a-z0-9]+)/i);if(mm)v=mm[1];if(/selftest/.test(s(location.search))){MC.selftest();return}
 if(h==='ops'||v==='ops')MC.openOps();else if(/^m\d+$/.test(h))MC.openMission(h.slice(1));else if(/^m\d+$/.test(v))MC.openMission(v.slice(1));}catch(e){document.title='hash err '+e.message}};
 window.addEventListener('hashchange',function(){if(MC.ready)MC.hash()});
