@@ -89,7 +89,7 @@ MC.seats=function(a){
     r.setAttribute('rx',3);
     r.setAttribute('fill',mis?(colOf(mis)==='red'?'rgba(255,77,94,.85)':colOf(mis)==='orange'?'rgba(255,176,32,.85)':'rgba(46,230,166,.85)'):'rgba(8,16,34,.55)');
     r.setAttribute('stroke',mis?'rgba(255,255,255,.55)':'rgba(143,163,199,.45)');
-    r.setAttribute('stroke-width','.7');
+    r.setAttribute('stroke-width','.7');r.setAttribute('class','seatrect s-'+ (mis?colOf(mis):'off'));
     n.appendChild(r);
     var tt=document.createElementNS(ns,'title');
     tt.textContent='SEAT '+(i+1)+(mis?' · '+shortName(mis)+' · '+statusWord(readiness(mis.id)||{},mis).toUpperCase():' · open');
