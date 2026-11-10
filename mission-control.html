@@ -402,7 +402,7 @@ var ctl=new AbortController(),to=setTimeout(function(){ctl.abort()},4000);
 var h=await fetch(SB_URL+"/auth/v1/health",{headers:{apikey:SB_KEY},signal:ctl.signal});clearTimeout(to);if(!h.ok)return;
 LIVE.sb=window.supabase.createClient(SB_URL,SB_KEY);
 LIVE.sb.auth.onAuthStateChange(function(ev,s){if(s&&!LIVE.on)liveSession()});
-var s=(await LIVE.sb.auth.getSession()).data.session;if(s)await liveSession();else showLogin()}catch(e){}}
+var s=(await LIVE.sb.auth.getSession()).data.session;if(!s){try{var hz=JSON.parse(localStorage.getItem("abc.portal.sess.v1")||"null");if(hz&&hz.access_token){var ad=await LIVE.sb.auth.setSession({access_token:hz.access_token,refresh_token:hz.refresh_token});s=(ad.data||{}).session||null}}catch(e3){}}if(s)await liveSession();else showLogin()}catch(e){}}
 function showLogin(msg){var d=document.getElementById("login");d.style.display="block";d.innerHTML='<b>Sign in to Mission Control</b><div style="margin:4px 0 8px;color:#8fa3c7">Use your own email. You get a one-time link. Nobody shares a login.</div><input id="lem" type="email" placeholder="you@email.com" autocomplete="email"><button class="cb" onclick="liveLink()">EMAIL ME A SIGN-IN LINK</button><div id="lmsg" style="margin-top:8px">'+esc(msg||"")+"</div>"}
 async function liveLink(){var e=document.getElementById("lem").value.trim().toLowerCase();if(!e)return;var r=await LIVE.sb.auth.signInWithOtp({email:e,options:{emailRedirectTo:location.href.split("#")[0].split("?")[0]}});document.getElementById("lmsg").textContent=r.error?"Couldn't send: "+r.error.message:"Check your email for your sign-in link."}
 async function liveOut(){await LIVE.sb.auth.signOut();location.reload()}
