@@ -20,7 +20,7 @@ MC.load=function(){
   .then(function(r){
     var k=['missions','readiness','incidents','orders','vendors','crew','assignments','open_items','airports','passengers','needs'];
     k.forEach(function(n,i){MC.cache[n]=r[i]||[]});
-    MC.ready=true;MC.err='';MC.wxLoad();MC.updateScene();if(MC.open)MC.rerender();return true;
+    MC.ready=true;MC.err='';MC.wxLoad();MC.updateScene();if(MC.open)MC.rerender();MC.hash();return true;
   }).catch(function(e){MC.err=e.message||'load failed';return false});
 };
 function missionsActive(){return q('missions').filter(function(m){return ACTIVE.indexOf(s(m.status).toLowerCase())>-1})}
@@ -57,7 +57,7 @@ MC.hangars=function(a,g){
     var lines=mis?[{t:shortName(mis),c:'#e8f0ff',z:10.5,w:'600'},
                    {t:(s(mis.origin)||'?')+' \u2192 '+(s(mis.destination)||'?'),c:'#cfdcff',z:8.6},
                    {t:statusWord(readiness(mis.id)||{},mis).toUpperCase(),c:tone(colOf(mis)),z:8.2,w:'700'}]
-                 :(signed?[{t:'BAY OPEN',c:'#8fa3c7',z:9.5,w:'600'},{t:'NO CLIENT ASSIGNED',c:'#5f7396',z:7.6}]
+                 :(signed?[{t:'BAY OPEN',c:'#8fa3c7',z:9.5,w:'600'},{t:'AVAILABLE',c:'#5f7396',z:7.6}]
                          :[{t:'BAY',c:'#8fa3c7',z:9.5,w:'600'},{t:'SIGN IN TO LOAD',c:'#5f7396',z:7.6}]);
     lines.forEach(function(L,k){
       var t=document.createElementNS('http://www.w3.org/2000/svg','text');
@@ -77,15 +77,20 @@ MC.decorate=function(a,list){
   var openInc=q('incidents').filter(function(i){return s(i.status).toLowerCase()!=='resolved'}).length;
   var red=list.filter(function(m){return colOf(m)==='red'}).length;
   var orange=list.filter(function(m){return colOf(m)==='orange'}).length;
+  var green=list.filter(function(m){return colOf(m)==='green'}).length;
   var texts=a.querySelectorAll('text');
   for(var i=0;i<texts.length;i++){
     var t=texts[i],v=s(t.textContent);
     if(/^MISSION #\d+$/.test(v))t.textContent=list.length+' MISSION'+(list.length===1?'':'S');
     else if(v==='BLOCKED')t.textContent=red?(red+' BLOCKED'):(orange?'ON TRACK':'ON TRACK');
     else if(/^\d+ problems?$/.test(v))t.textContent=openInc+' PROBLEM'+(openInc===1?'':'S');
-    else if(v==='STATUS / NOT LOADED'||v==='STATUS \u00B7 NOT LOADED'||v==='LIVE \u00B7 FROM DATABASE')t.textContent=MC.ready?'LIVE \u00B7 FROM DATABASE':'SIGN IN TO LOAD DATA';
+    else if(/^\d+ to watch$/.test(v))t.textContent=orange+' to watch';
+    else if(/^\d+ clear$/.test(v))t.textContent=green+' clear';
+    else if(v==='STATUS \u00B7 NOT LOADED'||v==='STATUS \u00B7 NOT LOADED'||v==='LIVE \u00B7 FROM DATABASE')t.textContent=MC.ready?'LIVE \u00B7 FROM DATABASE':'SIGN IN TO LOAD DATA';
   }
 };
+MC.hash=function(){try{var h=s(location.hash).replace('#','');if(h==='ops')MC.openOps();else if(/^m\d+$/.test(h))MC.openMission(h.slice(1));}catch(e){}};
+window.addEventListener('hashchange',function(){if(MC.ready)MC.hash()});
 MC.updateScene=function(){try{if(typeof build==='function'&&typeof path!=='undefined'&&path.length&&path[path.length-1][0]==='abc')refresh()}catch(e){}};
 function sheet(){
   var d=document.getElementById('sheet');
