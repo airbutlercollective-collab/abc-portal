@@ -17,6 +17,8 @@ border-radius:0 6px 6px 0;font-size:12px}
 .alert b{color:var(--red);letter-spacing:.08em}
 .alert span{color:var(--mut);display:block;margin-top:2px}
 .stagewrap{position:relative;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:#040814}
+.bayhit{position:absolute;background:transparent;border:0;padding:0;margin:0;cursor:pointer;border-radius:8px}
+.bayhit:focus-visible{outline:2px solid var(--gold);outline-offset:1px}
 svg#scene{display:block;width:100%;height:auto;touch-action:manipulation}
 .legend{display:flex;gap:14px;justify-content:center;margin:8px 0 0;font-size:10.5px;color:var(--mut);letter-spacing:.06em;flex-wrap:wrap}
 .legend i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px;vertical-align:1px}
@@ -193,8 +195,9 @@ async function refreshAll(){
 }
 
 /* ---------------- scene ---------------- */
+var HITS=[];
 function buildScene(){
-  var svg=$("#scene");svg.textContent="";
+  var svg=$("#scene");svg.textContent="";HITS=[];
   var defs=el("defs");
   var sky=el("linearGradient",{id:"sky",x1:"0",y1:"0",x2:"0",y2:"1"});
   sky.appendChild(el("stop",{offset:"0","stop-color":"#060d21"}));
@@ -286,17 +289,33 @@ function buildScene(){
       g.appendChild(el("text",{x:cx,y:baseY-hh+46,"text-anchor":"middle","font-size":"9.5","letter-spacing":"1.6",fill:"#46536b"})).textContent="EMPTY";
       g.appendChild(el("text",{x:cx,y:baseY-24,"text-anchor":"middle","font-size":"8.6","letter-spacing":"1",fill:"#3c4a66"})).textContent="no mission";
     }
-    (function(mm){
-      function go(){
-        if(!mm){toast("Hangar "+(n+1)+" is empty. No mission assigned.");return}
-        openMission(mm.id);
-      }
-      g.addEventListener("click",go);
-      g.addEventListener("keydown",function(e){if(e.key==="Enter"||e.key===" "){e.preventDefault();go()}});
-    })(m);
+    HITS.push({i:n,m:m,x:cx-w/2-6,y:baseY-hh-18,w:w+12,h:hh+58});
     svg.appendChild(g);
   }
   svg.appendChild(el("text",{x:500,y:608,"text-anchor":"middle","font-size":"9","letter-spacing":"2.6",fill:"#5b6d92"})).textContent="TAP A HANGAR TO ENTER THE MISSION";
+  layoutHits();
+}
+
+function layoutHits(){
+  var wrap=document.querySelector(".stagewrap");
+  if(!wrap)return;
+  Array.prototype.slice.call(wrap.querySelectorAll(".bayhit")).forEach(function(b){b.remove()});
+  HITS.forEach(function(o){
+    var b=document.createElement("button");
+    b.className="bayhit";b.type="button";
+    b.style.left=(o.x/1000*100)+"%";
+    b.style.top=(o.y/620*100)+"%";
+    b.style.width=(o.w/1000*100)+"%";
+    b.style.height=(o.h/620*100)+"%";
+    var num=("0"+(o.i+1)).slice(-2);
+    b.setAttribute("aria-label",o.m?("Hangar "+num+", "+(o.m.origin||"unassigned")+" to "+(o.m.destination||"unassigned")+", "+o.m.label)
+      :("Hangar "+num+", empty, no mission assigned"));
+    b.onclick=function(){
+      if(!o.m){toast("Hangar "+num+" is empty. No mission assigned.");return}
+      openMission(o.m.id);
+    };
+    wrap.appendChild(b);
+  });
 }
 
 function updateClocks(){
@@ -308,8 +327,10 @@ function updateClocks(){
 
 /* ---------------- panel ---------------- */
 function openMission(id){
-  var m=S.missions.filter(function(x){return x.id===id})[0];if(!m)return;
-  S.open=id;renderPanel(m);$("#panel").className="open";
+  try{
+    var m=S.missions.filter(function(x){return x.id===id})[0];if(!m)return;
+    S.open=id;renderPanel(m);$("#panel").className="open";
+  }catch(e){toast("Could not open hangar: "+e.message);console.error(e)}
 }
 function closePanel(){S.open=null;$("#panel").className=""}
 function ordStateChip(st){
@@ -350,7 +371,7 @@ function renderPanel(m){
   var html="";
   html+='<header><div class="n">'+("0"+(S.missions.findIndex(function(x){return x.id===m.id})+1)).slice(-2)+'</div><div class="t">'
     +'<b>'+esc(m.label)+'</b><small>'+esc((m.origin&&m.destination)?(m.origin+" to "+m.destination):"route unassigned")
-    +' &middot; departs '+esc(tzDate(m.departs_at,tzO))+' '+esc((S.airports[m.origin]||{}).tz?"local":"")+'</small>'
+    +' &middot; '+(m.departs_at?('departs '+esc(tzDate(m.departs_at,tzO))+(S.airports[m.origin]?" "+esc(S.airports[m.origin].tz.split("/")[1].replace("_"," ")):"")):'departure not set')+'</small>'
     +'<div style="margin-top:6px"><span class="chip '+chipClass(col)+'">'+(col==="red"?"blocked":col==="orange"?"needs attention":col==="green"?"ready":"not monitored")+'</span>'
     +(m.is_example?' <span class="chip c-grey">rehearsal</span>':'')+'</div></div>'
     +'<button id="pclose" aria-label="Close">Close</button></header>';
@@ -361,7 +382,7 @@ function renderPanel(m){
     +'<dt>Operator</dt><dd>'+(m.operator_confirmed?'<span class="chip c-green">confirmed</span>':'<span class="chip c-amber">not confirmed</span>')+'</dd>'
     +'<dt>Open orders</dt><dd>'+esc(rd.open_orders||0)+' &middot; failed '+esc(rd.failed_orders||0)+' &middot; overdue acks '+esc(rd.overdue_acks||0)+'</dd>'
     +'<dt>Blocking</dt><dd>'+esc(rd.blocking_incidents||0)+'</dd>'
-    +'<dt>Arrives</dt><dd>'+esc(tzDate(m.arrives_at,tzD))+' '+esc((S.airports[m.destination]||{}).tz?"local":"")+'</dd>'
+    +'<dt>Arrives</dt><dd>'+(m.arrives_at?esc(tzDate(m.arrives_at,tzD)):"not set")+'</dd>'
     +'</div></div>';
 
   html+='<div class="sec"><h3>Vendor confirmations ('+orders.length+')</h3>';
