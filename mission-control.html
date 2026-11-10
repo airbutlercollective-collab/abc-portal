@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Air Butler Collective - Mission Control</title>
+<link rel="apple-touch-icon" href="data:,">
+<style>
+:root{--bg:#050b1c;--ink:#e8f0ff;--mut:#8fa3c7;--gold:#c9ab6b;--line:#1b2a4a;
+--red:#ff4d5e;--amber:#ffa53d;--green:#2ee6a6;--grey:#46536b;color-scheme:dark}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+padding:10px 10px calc(28px + env(safe-area-inset-bottom,0px));max-width:960px;margin-inline:auto}
+h1{margin:6px 0 2px;font:400 11px/1 Georgia,serif;letter-spacing:.34em;color:var(--gold);text-align:center;text-transform:uppercase}
+.sub{text-align:center;color:var(--mut);font-size:10.5px;letter-spacing:.22em;text-transform:uppercase;margin-bottom:10px}
+.alert{display:none;margin:0 0 10px;padding:9px 12px;border-left:3px solid var(--red);background:rgba(255,77,94,.09);
+border-radius:0 6px 6px 0;font-size:12px}
+.alert b{color:var(--red);letter-spacing:.08em}
+.alert span{color:var(--mut);display:block;margin-top:2px}
+.stagewrap{position:relative;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#050a18;box-shadow:inset 0 -40px 80px rgba(0,0,0,.55)}
+.scene{position:relative;width:100%;aspect-ratio:1000/560}
+.scene svg{position:absolute;inset:0;width:100%;height:100%;display:block}
+.scene .htmlLayer{position:absolute;inset:0}
+.bayhit{position:absolute;background:linear-gradient(180deg,rgba(6,12,28,.0),rgba(6,12,28,.72));border:1px solid rgba(120,150,200,.22);border-radius:9px;padding:7px 8px 6px;cursor:pointer;color:inherit;font:inherit;text-align:left;overflow:hidden;transition:border-color .15s,background .15s}
+.bayhit:hover,.bayhit:focus-visible{border-color:rgba(201,171,107,.75);background:linear-gradient(180deg,rgba(10,18,40,.25),rgba(6,12,28,.85));outline:none}
+.bayhit .bn{display:block;font:400 13px/1 Georgia,serif;color:#e8f0ff;letter-spacing:.06em}
+.bayhit .bw{display:block;font-size:8.6px;letter-spacing:.11em;margin-top:2px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bayhit .br{display:block;font-size:9.5px;color:#c3d2ea;margin-top:4px;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bayhit .bm{display:block;font-size:8px;color:#8fa3c7;margin-top:2px;letter-spacing:.03em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ripple{animation:ripple 1.4s ease-in-out infinite}
+@keyframes ripple{0%,100%{opacity:.35}50%{opacity:1}}
+.strobe{animation:strobe 1.8s steps(1,end) infinite}
+@keyframes strobe{0%,8%{opacity:1}9%,100%{opacity:.05}}
+.glowpulse{animation:glowpulse 4.5s ease-in-out infinite}
+@keyframes glowpulse{0%,100%{opacity:.55}50%{opacity:.85}}
+@media (prefers-reduced-motion: reduce){.ripple,.strobe,.glowpulse{animation:none}}
+.wxchip{position:absolute;top:8px;right:8px;border:1px solid rgba(150,180,220,.28);border-radius:9px;padding:7px 10px;background:rgba(5,10,24,.72);backdrop-filter:blur(3px);color:#e8f0ff;font-size:10px;line-height:1.35;max-width:46%}
+.wxchip b{display:block;font:400 16px/1.1 Georgia,serif;letter-spacing:.06em}
+.wxchip .wx-a{color:#8fa3c7;letter-spacing:.14em;font-size:8.5px;text-transform:uppercase}
+.baylist{display:none;margin-top:10px}
+@media(max-width:720px){
+  .htmlLayer{display:none}
+  .baylist{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+  .baylist .bl{border:1px solid var(--line);border-radius:8px;padding:9px;background:#070f21;text-align:left;color:inherit;font:inherit}
+  .baylist .bl b{display:block;font:400 14px/1 Georgia,serif;letter-spacing:.05em}
+  .baylist .bl span{display:block;font-size:9.5px;letter-spacing:.12em;margin-top:3px;font-weight:600}
+  .baylist .bl em{display:block;font-style:normal;font-size:9.5px;color:#8fa3c7;margin-top:4px;line-height:1.3}
+}
+svg#scene{display:block;width:100%;height:auto;touch-action:manipulation}
+.legend{display:flex;gap:14px;justify-content:center;margin:8px 0 0;font-size:10.5px;color:var(--mut);letter-spacing:.06em;flex-wrap:wrap}
+.legend i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px;vertical-align:1px}
+.sweep{margin-top:10px;padding:11px 13px;border:1px solid var(--line);border-left:3px solid var(--amber);border-radius:0 8px 8px 0;background:rgba(255,165,61,.06);font-size:12.5px;line-height:1.5}
+.sweep b{letter-spacing:.04em}
+.sweep .names{display:block;color:var(--mut);font-size:11.5px;margin-top:4px}
+.oversight{margin-top:9px;padding:11px 13px;border:1px solid var(--line);border-radius:8px;background:#060d1d}
+.oversight h4{margin:0 0 9px;font:400 9.8px/1.4 system-ui;letter-spacing:.16em;text-transform:uppercase;color:var(--mut)}
+.tiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
+@media(min-width:620px){.tiles{grid-template-columns:repeat(5,minmax(0,1fr))}}
+.tile{border:1px solid var(--line);border-radius:7px;padding:8px 9px;min-width:0}
+.tile i{display:block;font:400 17px/1.2 Georgia,serif;font-style:normal;color:var(--ink)}
+.tile span{display:block;color:var(--mut);font-size:9.8px;letter-spacing:.1em;text-transform:uppercase;margin-top:3px}
+.tile.red i{color:var(--red)}.tile.green i{color:var(--green)}.tile.amber i{color:var(--amber)}
+.bar{display:flex;align-items:center;gap:10px;margin-top:12px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;
+font-size:11px;color:var(--mut);letter-spacing:.04em}
+.bar .who{color:var(--ink)}
+.bar button{margin-left:auto}
+button{font:inherit;cursor:pointer;border-radius:6px;border:1px solid var(--line);background:#0c1630;color:var(--ink);padding:7px 11px;font-size:11.5px;letter-spacing:.06em}
+button.pri{background:rgba(46,230,166,.12);border-color:rgba(46,230,166,.45);color:var(--green)}
+button.warn{background:rgba(255,165,61,.12);border-color:rgba(255,165,61,.45);color:var(--amber)}
+button.bad{background:rgba(255,77,94,.12);border-color:rgba(255,77,94,.45);color:var(--red)}
+button:disabled{opacity:.45;cursor:default}
+#login{max-width:380px;margin:14vh auto 0;padding:18px;border:1px solid var(--line);border-radius:12px;background:#08101f}
+#login h2{font:400 12px/1 Georgia,serif;letter-spacing:.3em;color:var(--gold);text-align:center;margin:4px 0 16px}
+label{display:block;font-size:11px;letter-spacing:.1em;color:var(--mut);margin:10px 0 4px}
+input{width:100%;padding:10px;border-radius:6px;border:1px solid var(--line);background:#04091a;color:var(--ink);font:inherit}
+#login button{width:100%;margin-top:14px;padding:11px}
+.lmsg{margin-top:10px;font-size:11.5px;color:var(--amber);min-height:16px;text-align:center}
+/* drill panel */
+#panel{position:fixed;inset:0;background:rgba(3,7,18,.86);backdrop-filter:blur(3px);display:none;z-index:40;overflow-y:auto;
+padding:12px 10px calc(24px + env(safe-area-inset-bottom,0px))}
+#panel.open{display:block}
+.sheet{max-width:720px;margin:0 auto;border:1px solid var(--line);border-radius:12px;background:#070f21;overflow:hidden}
+.sheet header{display:flex;align-items:flex-start;gap:10px;padding:12px 14px;border-bottom:1px solid var(--line);background:#0a1428}
+.sheet header .n{font:400 22px/1 Georgia,serif;color:var(--gold);letter-spacing:.06em}
+.sheet header .t{flex:1;min-width:0}
+.sheet header .t b{display:block;font-size:14px;font-weight:600}
+.sheet header .t small{color:var(--mut);font-size:11px;letter-spacing:.06em}
+.chip{display:inline-block;padding:2px 7px;border-radius:20px;font-size:10px;letter-spacing:.12em;text-transform:uppercase;border:1px solid}
+.c-red{color:var(--red);border-color:rgba(255,77,94,.5);background:rgba(255,77,94,.1)}
+.c-amber{color:var(--amber);border-color:rgba(255,165,61,.5);background:rgba(255,165,61,.1)}
+.c-green{color:var(--green);border-color:rgba(46,230,166,.5);background:rgba(46,230,166,.1)}
+.c-grey{color:var(--mut);border-color:var(--line);background:rgba(143,163,199,.06)}
+.sec{padding:12px 14px;border-bottom:1px solid var(--line)}
+.sec h3{margin:0 0 8px;font:400 10.5px/1 system-ui;letter-spacing:.2em;text-transform:uppercase;color:var(--mut)}
+.kv{display:grid;grid-template-columns:110px 1fr;gap:4px 10px;font-size:12.5px}
+.kv dt{color:var(--mut);font-size:11px;letter-spacing:.06em}
+.kv dd{margin:0}
+.ord{border:1px solid var(--line);border-radius:8px;padding:10px;margin-bottom:9px;background:#060d1d}
+.ord .top{display:flex;gap:8px;align-items:baseline;margin-bottom:6px}
+.ord .top b{flex:1;font-size:12.5px;font-weight:600}
+.ord .meta{font-size:11.5px;color:var(--mut);display:grid;grid-template-columns:96px 1fr;gap:2px 8px}
+.ord .acts{display:flex;gap:7px;margin-top:9px;flex-wrap:wrap}
+.empty{color:var(--mut);font-size:12px;font-style:italic}
+#toast{position:fixed;left:50%;transform:translateX(-50%);bottom:22px;max-width:92vw;padding:10px 14px;border-radius:8px;
+background:#0c1a33;border:1px solid var(--line);font-size:12px;display:none;z-index:60;text-align:center}
+#toast.show{display:block}
+</style></head>
+<body>
+
+<h1>Air Butler Collective</h1>
+<div class="sub">Mission Control</div>
+<div class="alert" id="alert"><b></b><span></span></div>
+
+<div id="login" hidden>
+  <h2>Sign in</h2>
+  <label for="em">Email</label><input id="em" type="email" autocomplete="username" inputmode="email">
+  <label for="pw">Password</label><input id="pw" type="password" autocomplete="current-password">
+  <button id="signin" class="pri">Sign in</button>
+  <div class="lmsg" id="lmsg"></div>
+</div>
+
+<div id="app" hidden>
+  <div class="stagewrap">
+    <div class="scene">
+      <svg id="scene" viewBox="0 0 1000 560" role="img" aria-label="Air Butler Collective apron at dusk: a business jet on the ramp, eight lit mission hangars, and a runway behind them"></svg>
+      <div class="htmlLayer" id="htmlLayer"></div>
+      <div class="wxchip" id="wxchip"><span class="wx-a">Weather</span><b>-</b></div>
+    </div>
+  </div>
+  <div class="baylist" id="baylist"></div>
+  <div class="legend">
+    <span><i style="background:var(--green)"></i>CLEAR</span>
+    <span><i style="background:var(--amber)"></i>WATCH</span>
+    <span><i style="background:var(--red)"></i>PROBLEM</span>
+    <span><i style="background:var(--grey)"></i>NOT MONITORED</span>
+  </div>
+  <div id="sweep" class="sweep"></div>
+  <div id="oversight" class="oversight"></div>
+  <div class="bar"><span class="who" id="who">-</span><span id="sync"></span><button id="refresh">Refresh</button><button id="out">Sign out</button></div>
+</div>
+
+<div id="panel" aria-live="polite"><div class="sheet" id="sheet"></div></div>
+<div id="toast"></div>
+
+<script>
+/* ---------------- config ---------------- */
+var SB_URL="https://xacwvpxfutczxsqxykiu.supabase.co";
+var SB_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhhY3d2cHhmdXRjenhzcXh5a2l1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI2OTc0ODYsImV4cCI6MjA5ODI3MzQ4Nn0.a2MvwEYNFaR2gir3DfThl7N4fE2cZxQZX8ySSQc5a8E";
+var SKEY="abc.portal.sess.v1";
+var S={sess:null,me:null,missions:[],ready:{},orders:[],vendors:{},crew:{},assign:[],incidents:[],airports:{},needs:[],changes:[],open:null};
+
+/* ---------------- helpers ---------------- */
+function $(s){return document.querySelector(s)}
+function el(t,a,txt){var e=document.createElementNS("http://www.w3.org/2000/svg",t);for(var k in (a||{}))e.setAttribute(k,a[k]);if(txt!=null)e.textContent=txt;return e}
+function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+function toast(m){var t=$("#toast");t.textContent=m;t.className="show";clearTimeout(t._x);t._x=setTimeout(function(){t.className=""},3200)}
+function statusWord(c){return c==="red"?"PROBLEM":c==="orange"?"WATCH":c==="green"?"CLEAR":"NOT MONITORED"}
+function colorOf(c){return c==="red"?"var(--red)":c==="orange"?"var(--amber)":c==="green"?"var(--green)":"var(--grey)"}
+function chipClass(c){return c==="red"?"c-red":c==="orange"?"c-amber":c==="green"?"c-green":"c-grey"}
+function tzTime(tz,when){
+  try{return new Intl.DateTimeFormat("en-US",{hour:"2-digit",minute:"2-digit",hour12:false,timeZone:tz}).format(when||new Date())}
+  catch(e){return"--:--"}
+}
+function tzDate(iso,tz){
+  if(!iso)return"not set";
+  try{return new Intl.DateTimeFormat("en-US",{weekday:"short",month:"short",day:"numeric",hour:"2-digit",minute:"2-digit",timeZone:tz||"America/New_York"}).format(new Date(iso))}
+  catch(e){return new Date(iso).toLocaleString()}
+}
+function readinessColor(m){var r=S.ready[m.id];return (r&&r.color)||(m.status==="blocked"?"red":"grey")}
+
+/* ---------------- auth ---------------- */
+function saveSess(s){S.sess=s;try{localStorage.setItem(SKEY,JSON.stringify(s))}catch(e){}}
+function loadSess(){try{var r=localStorage.getItem(SKEY);return r?JSON.parse(r):null}catch(e){return null}}
+function clearSess(){S.sess=null;try{localStorage.removeItem(SKEY)}catch(e){}}
+
+async function authPost(path,body,extra){
+  var r=await fetch(SB_URL+"/auth/v1/"+path,{method:"POST",
+    headers:Object.assign({"apikey":SB_KEY,"Content-Type":"application/json"},extra||{}),
+    body:body?JSON.stringify(body):undefined});
+  var j=await r.json().catch(function(){return{}});
+  if(!r.ok)throw new Error(j.error_description||j.msg||j.error||("HTTP "+r.status));
+  return j;
+}
+function setSession(t){
+  if(!t||!t.access_token)return;
+  saveSess({access_token:t.access_token,refresh_token:t.refresh_token,expires_at:Date.now()+(t.expires_in||3600)*1000-60000,email:(t.user&&t.user.email)||(S.sess&&S.sess.email)||""});
+}
+async function refreshSess(){
+  if(!S.sess||!S.sess.refresh_token)return false;
+  if(S.sess.expires_at&&Date.now()<S.sess.expires_at)return true;
+  try{var t=await authPost("token?grant_type=refresh_token",{refresh_token:S.sess.refresh_token});setSession(t);return true}
+  catch(e){clearSess();return false}
+}
+function token(){return S.sess?S.sess.access_token:null}
+
+/* ---------------- data ---------------- */
+async function sb(path,opts){
+  opts=opts||{};
+  var ok=await refreshSess();
+  if(!ok)throw new Error("session expired");
+  var r=await fetch(SB_URL+"/rest/v1/"+path,{method:opts.method||"GET",
+    headers:Object.assign({"apikey":SB_KEY,"Authorization":"Bearer "+token(),"Accept-Profile":opts.schema||"mission_control","Content-Profile":opts.schema||"mission_control",
+      "Content-Type":"application/json","Prefer":opts.prefer||"return=representation"},{}),
+    body:opts.body?JSON.stringify(opts.body):undefined});
+  var txt=await r.text();
+  var j=txt?JSON.parse(txt):null;
+  if(!r.ok)throw new Error((j&&(j.message||j.hint))||("HTTP "+r.status));
+  return j;
+}
+async function loadAll(){
+  var mePromise=sb("profiles?select=user_id,display_name,role&user_id=eq."+encodeURIComponent(await uid()),{schema:"mission_control"}).catch(function(){return[]});
+  var res=await Promise.all([
+    sb("missions?select=id,label,origin,destination,departs_at,arrives_at,status,operator_confirmed,notes,is_example&order=id.asc"),
+    sb("mission_readiness?select=*"),
+    sb("orders?select=id,mission_id,vendor_id,service,state,due_at,ack_due_at,delivery_location,dietary_instructions,allergy_instructions,written_confirmation,responsible,updated_at,status_color&order=id.asc"),
+    sb("vendors?select=id,name,category"),
+    sb("crew?select=id,name,crew_role,status&active=eq.true"),
+    sb("mission_assignments?select=id,mission_id,crew_id,state"),
+    sb("incidents?select=id,mission_id,title,status,severity,required_action,is_example&status=eq.open"),
+    sb("airports?select=code,name,tz"),
+    sb("passenger_needs?select=id,passenger_id,category,detail,severity"),
+    sb("mission_changes?select=id,mission_id,kind,detail,at")
+  ]);
+  S.missions=res[0]||[];S.ready={};(res[1]||[]).forEach(function(r){S.ready[r.mission_id]=r});
+  S.orders=res[2]||[];S.vendors={};(res[3]||[]).forEach(function(v){S.vendors[v.id]=v});
+  S.crew={};(res[4]||[]).forEach(function(c){S.crew[c.id]=c});
+  S.assign=res[5]||[];S.incidents=res[6]||[];S.airports={};(res[7]||[]).forEach(function(a){S.airports[a.code]=a});
+  S.needs=res[8]||[];S.changes=res[9]||[];
+  S.me=(await mePromise)[0]||null;
+}
+async function uid(){
+  if(S.sess&&S.sess.uid)return S.sess.uid;
+  var r=await fetch(SB_URL+"/auth/v1/user",{headers:{"apikey":SB_KEY,"Authorization":"Bearer "+token()}});
+  var j=await r.json();if(j&&j.id){S.sess.uid=j.id;saveSess(S.sess);return j.id}
+  throw new Error("cannot resolve user");
+}
+
+async function refreshAll(){
+  try{
+    await loadAll();buildScene();updateClocks();
+    $("#who").textContent=(S.me?S.me.display_name+" ("+S.me.role+")":(S.sess&&S.sess.email)||"signed in");
+    $("#sync").textContent="synced "+new Date().toLocaleTimeString();
+    renderAlert();
+    if(S.open!=null){var m=S.missions.filter(function(x){return x.id===S.open})[0];if(m)renderPanel(m);else closePanel()}
+  }catch(e){toast("Refresh failed: "+e.message)}
+}
+
+/* ---------------- scene ---------------- */
+
+/* ---------------- the field ---------------- */
+var GEO={x0:56,w:106,gap:12,top:252,h:152,vb:{w:1000,h:560}};
+var COORD={TEB:[40.850,-74.061],FLL:[26.072,-80.153],HPN:[41.067,-73.708],MMU:[40.799,-74.415],
+JFK:[40.639,-73.779],LGA:[40.777,-73.873],EWR:[40.693,-74.169],PBI:[26.683,-80.096],MIA:[25.793,-80.290],
+OPF:[25.907,-80.278],VNY:[34.210,-118.490],LAX:[33.942,-118.408],SRQ:[27.395,-82.554],RSW:[26.536,-81.755],
+BOS:[42.363,-71.006],PHL:[39.872,-75.241],ASE:[39.223,-106.869],EGE:[39.642,-106.918],LAS:[36.080,-115.152],
+DAL:[32.847,-96.852],ADS:[32.968,-96.836],HOU:[29.645,-95.277],DEN:[39.861,-104.673],ORD:[41.978,-87.905],
+SFO:[37.619,-122.375],PDK:[33.876,-84.302],FTW:[32.820,-97.362],SDL:[33.623,-111.910],BUR:[34.201,-118.359],
+SNA:[33.676,-117.868],SAN:[32.734,-117.190],PHX:[33.434,-112.012],SAT:[29.534,-98.469],AUS:[30.194,-97.670]};
+var WXCODE={0:"clear",1:"mostly clear",2:"partly cloudy",3:"overcast",45:"fog",48:"freezing fog",
+51:"light drizzle",53:"drizzle",55:"heavy drizzle",61:"light rain",63:"rain",65:"heavy rain",
+71:"light snow",73:"snow",75:"heavy snow",80:"rain showers",81:"rain showers",82:"heavy showers",
+95:"thunderstorms",96:"thunderstorms",99:"severe storms"};
+
+function hangarX(n){return GEO.x0+n*(GEO.w+GEO.gap)}
+
+function art(){
+  var s='';
+  s+='<defs>'
+   +'<linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">'
+   +'<stop offset="0" stop-color="#04081a"/><stop offset=".34" stop-color="#111a3e"/>'
+   +'<stop offset=".62" stop-color="#33274f"/><stop offset=".84" stop-color="#7d4356"/>'
+   +'<stop offset="1" stop-color="#c8764a"/></linearGradient>'
+   +'<radialGradient id="sunglow" cx=".5" cy=".5" r=".5">'
+   +'<stop offset="0" stop-color="#ffc07a" stop-opacity=".9"/><stop offset=".4" stop-color="#ee8a45" stop-opacity=".4"/>'
+   +'<stop offset="1" stop-color="#ee8a45" stop-opacity="0"/></radialGradient>'
+   +'<linearGradient id="apron" x1="0" y1="0" x2="0" y2="1">'
+   +'<stop offset="0" stop-color="#1b2540"/><stop offset=".3" stop-color="#111a2e"/>'
+   +'<stop offset=".72" stop-color="#0a1120"/><stop offset="1" stop-color="#05090f"/></linearGradient>'
+   +'<linearGradient id="door" x1="0" y1="1" x2="0" y2="0">'
+   +'<stop offset="0" stop-color="#fff0cf" stop-opacity="1"/><stop offset=".22" stop-color="#ffdca4" stop-opacity=".95"/>'
+   +'<stop offset=".5" stop-color="#f0ac66" stop-opacity=".72"/><stop offset=".78" stop-color="#9c6630" stop-opacity=".4"/>'
+   +'<stop offset="1" stop-color="#3d2714" stop-opacity=".16"/></linearGradient>'
+   +'<radialGradient id="pool" cx=".5" cy=".5" r=".5">'
+   +'<stop offset="0" stop-color="#ffcf94" stop-opacity=".55"/><stop offset=".55" stop-color="#e39a52" stop-opacity=".22"/>'
+   +'<stop offset="1" stop-color="#e39a52" stop-opacity="0"/></radialGradient>'
+   +'<linearGradient id="fus" x1="0" y1="0" x2="0" y2="1">'
+   +'<stop offset="0" stop-color="#f2f7ff"/><stop offset=".3" stop-color="#cbd8ec"/>'
+   +'<stop offset=".62" stop-color="#8fa2c0"/><stop offset="1" stop-color="#465872"/></linearGradient>'
+   +'<linearGradient id="wing" x1="0" y1="0" x2="0" y2="1">'
+   +'<stop offset="0" stop-color="#b6c6de"/><stop offset="1" stop-color="#42536f"/></linearGradient>'
+   +'<linearGradient id="beam" x1="0" y1="0" x2="0" y2="1">'
+   +'<stop offset="0" stop-color="#ffe7c0" stop-opacity=".22"/><stop offset="1" stop-color="#ffe7c0" stop-opacity="0"/></linearGradient>'
+   +'<linearGradient id="fore" x1="0" y1="0" x2="0" y2="1">'
+   +'<stop offset="0" stop-color="#04070e" stop-opacity="0"/><stop offset="1" stop-color="#02050a" stop-opacity=".95"/></linearGradient>'
+   +'</defs>';
+
+  /* sky */
+  s+='<rect x="0" y="0" width="1000" height="216" fill="url(#sky)"/>';
+  s+='<circle cx="806" cy="214" r="168" fill="url(#sunglow)"/>';
+  var stars=[[54,34],[126,66],[198,26],[268,84],[332,44],[398,20],[462,78],[524,38],[588,62],[650,28],[712,84],[774,46],[836,72],[898,32],[942,88],[96,112],[286,118],[498,124],[664,110],[860,118]];
+  stars.forEach(function(p,i){
+    s+='<circle cx="'+p[0]+'" cy="'+p[1]+'" r="'+(i%3===0?1.6:1)+'" fill="#eaf1ff" opacity="'+(i%4===0?".85":".4")+'"'+(i%5===0?' class="ripple" style="animation-delay:'+(i*0.4)+'s"':'')+'/>';
+  });
+
+  /* distant city line */
+  s+='<path transform="translate(0,-86)" d="M0 300 L0 272 L40 272 L40 258 L66 258 L66 274 L106 274 L106 246 L132 246 L132 268 L166 268 L166 260 L202 260 L202 242 L226 242 L226 266 L266 266 L266 254 L304 254 L304 272 L342 272 L342 248 L370 248 L370 264 L414 264 L414 256 L452 256 L452 272 L500 272 L500 252 L530 252 L530 268 L570 268 L570 258 L614 258 L614 274 L658 274 L658 250 L688 250 L688 270 L732 270 L732 262 L770 262 L770 274 L816 274 L816 254 L848 254 L848 270 L890 270 L890 258 L934 258 L934 272 L968 272 L968 262 L1000 262 L1000 300 Z" fill="#080e1f"/>';
+
+  /* runway behind the hangars */
+  s+='<rect x="0" y="212" width="1000" height="30" fill="#0b1222"/>';
+  s+='<rect x="0" y="212" width="1000" height="2" fill="#243352"/>';
+  for(var rl=0;rl<25;rl++){
+    s+='<rect x="'+(24+rl*40)+'" y="225" width="20" height="3.2" rx="1.6" fill="#6b7d9f" opacity=".85"/>';
+  }
+  for(var ed=0;ed<22;ed++){
+    s+='<circle cx="'+(20+ed*46)+'" cy="214" r="1.9" fill="#ffcf8a" opacity=".95"/>';
+    s+='<circle cx="'+(20+ed*46)+'" cy="240" r="1.6" fill="#7fa8ff" opacity=".75"/>';
+  }
+
+  /* apron */
+  s+='<path d="M0 242 L1000 242 L1000 560 L0 560 Z" fill="url(#apron)"/>';
+  s+='<path d="M0 242 L1000 242 L1000 247 L0 247 Z" fill="#2a3a58" opacity=".85"/>';
+  /* apron seams converging toward the horizon */
+  for(var sm=0;sm<9;sm++){
+    var bx=sm*125-60;
+    s+='<path d="M'+bx+' 560 L'+(bx*0.34+330)+' 246" stroke="#1b2740" stroke-width="1.1" opacity=".55"/>';
+  }
+  for(var hz=0;hz<4;hz++){
+    var yy=300+hz*hz*22;
+    s+='<path d="M0 '+yy+' L1000 '+yy+'" stroke="#1a2438" stroke-width="1" opacity=".45"/>';
+  }
+
+  /* floodlight poles */
+  [268,700].forEach(function(fx){
+    s+='<rect x="'+(fx-1.6)+'" y="150" width="3.2" height="104" fill="#28374f"/>';
+    s+='<rect x="'+(fx-13)+'" y="146" width="26" height="7" rx="2" fill="#33455f"/>';
+    s+='<circle cx="'+(fx-8)+'" cy="150" r="2.6" fill="#fff0d0"/>';
+    s+='<circle cx="'+fx+'" cy="150" r="2.6" fill="#fff0d0"/>';
+    s+='<circle cx="'+(fx+8)+'" cy="150" r="2.6" fill="#fff0d0"/>';
+    s+='<path d="M'+(fx-30)+' 152 L'+(fx+30)+' 152 L'+(fx+150)+' 430 L'+(fx-150)+' 430 Z" fill="url(#beam)" opacity=".5"/>';
+  });
+
+  /* hangars */
+  for(var n=0;n<8;n++){
+    var x=hangarX(n),y=GEO.top,w=GEO.w,hh=GEO.h;
+    s+='<ellipse cx="'+(x+w/2)+'" cy="'+(y+hh+34)+'" rx="'+(w*0.95)+'" ry="42" fill="url(#pool)"/>';
+    s+='<rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+hh+'" rx="3" fill="#0a1226" stroke="#26344e" stroke-width="1.5"/>';
+    /* roof with a slight parapet */
+    s+='<path d="M'+(x-7)+' '+y+' L'+(x+w/2)+' '+(y-20)+' L'+(x+w+7)+' '+y+' Z" fill="#131d33" stroke="#2b3a56" stroke-width="1.3"/>';
+    s+='<path d="M'+(x-7)+' '+y+' L'+(x+w+7)+' '+y+'" stroke="#33456010" stroke-width="0"/>';
+    /* door frame + glowing opening */
+    s+='<rect x="'+(x+8)+'" y="'+(y+22)+'" width="'+(w-16)+'" height="'+(hh-30)+'" rx="2" fill="url(#door)" class="glowpulse" style="animation-delay:'+(n*0.3)+'s"/>';
+    s+='<rect x="'+(x+8)+'" y="'+(y+22)+'" width="'+(w-16)+'" height="'+(hh-30)+'" rx="2" fill="none" stroke="#e0b378" stroke-opacity=".5" stroke-width="1"/>';
+    /* interior floor light */
+    s+='<rect x="'+(x+8)+'" y="'+(y+hh-30)+'" width="'+(w-16)+'" height="14" fill="#fff3d6" opacity=".5"/>';
+    /* interior shapes so the bay looks occupied */
+    s+='<rect x="'+(x+18)+'" y="'+(y+hh-52)+'" width="'+(w-36)+'" height="22" rx="3" fill="#2a1c10" opacity=".45"/>';
+    /* door mullions */
+    s+='<path d="M'+(x+w/2)+' '+(y+22)+' L'+(x+w/2)+' '+(y+hh-8)+'" stroke="#3a2a16" stroke-opacity=".45" stroke-width="1.6"/>';
+    /* number plate on the parapet, clear of everything */
+    s+='<rect x="'+(x+w/2-17)+'" y="'+(y-30)+'" width="34" height="17" rx="2.5" fill="#0a1226" stroke="#3a4a68" stroke-width="1"/>';
+    s+='<text x="'+(x+w/2)+'" y="'+(y-17.5)+'" text-anchor="middle" font-family="Georgia,serif" font-size="12.5" letter-spacing="1" fill="#ffd9a0">'+("0"+(n+1)).slice(-2)+'</text>';
+    /* roof light */
+    s+='<circle cx="'+(x+w/2)+'" cy="'+(y-24)+'" r="2.2" fill="#ffd9a0" opacity=".9"/>';
+    /* light spill onto the apron */
+    s+='<path d="M'+(x+14)+' '+(y+hh-4)+' L'+(x+w-14)+' '+(y+hh-4)+' L'+(x+w+52)+' '+(y+hh+96)+' L'+(x-52)+' '+(y+hh+96)+' Z" fill="url(#beam)" opacity=".55"/>';
+  }
+
+  /* the aircraft, parked in front of the hangars */
+  s+=jet(74,352);
+  /* ground support */
+  s+=tug(690,470);s+=truck(792,462);
+  s+=person(560,452);s+=person(576,460);s+=person(936,458);s+=person(953,466);
+  /* foreground falloff */
+  s+='<rect x="0" y="474" width="1000" height="86" fill="url(#fore)"/>';
+  return s;
+}
+
+function jet(tx,ty){
+  var g='<g transform="translate('+tx+','+ty+') scale(1.18)">';
+  g+='<ellipse cx="210" cy="96" rx="215" ry="11" fill="#04080f" opacity=".55"/>';
+  g+='<path d="M-6 62 C40 34,150 20,268 20 C330 20,392 26,432 36 L446 46 C400 60,300 74,210 76 L60 76 C20 74,-6 70,-6 62 Z" fill="url(#fus)" stroke="#6d7f9e" stroke-width="1"/>';
+  g+='<path d="M392 30 C416 33,436 40,446 46 C424 54,402 58,384 60 Z" fill="#b9cbe4" opacity=".95"/>';
+  g+='<path d="M400 33 C418 36,432 41,441 46 L420 50 Z" fill="#8fd4f5" opacity=".9"/>';
+  for(var wi=0;wi<9;wi++){
+    g+='<rect x="'+(112+wi*27)+'" y="40" width="11" height="5" rx="2.5" fill="#ffd9a0" opacity=".85"/>';
+  }
+  g+='<path d="M150 34 L74 -18 L112 -18 L196 26 Z" fill="url(#wing)" opacity=".95"/>';
+  g+='<path d="M150 70 L74 112 L112 112 L198 76 Z" fill="url(#wing)" opacity=".95"/>';
+  g+='<path d="M250 70 L214 108 L246 108 L282 74 Z" fill="#5b6d8e" opacity=".9"/>';
+  g+='<ellipse cx="120" cy="26" rx="30" ry="11" fill="#93a6c4" stroke="#5f7192" stroke-width="1"/>';
+  g+='<ellipse cx="120" cy="72" rx="30" ry="11" fill="#7d90b0" stroke="#5f7192" stroke-width="1"/>';
+  g+='<path d="M330 18 L368 -54 L392 -54 L372 22 Z" fill="#a8bbd8" opacity=".95"/>';
+  g+='<path d="M336 20 L360 -30 L378 -30 L360 22 Z" fill="#cdd9ec" opacity=".9"/>';
+  g+='<path d="M330 76 L286 108 L330 108 L360 78 Z" fill="#8ea1c0" opacity=".9"/>';
+  g+='<path d="M196 78 L188 96 L204 96 L212 78 Z" fill="#63758f"/>';
+  g+='<circle cx="196" cy="100" r="7" fill="#1b2333" stroke="#5b6c86" stroke-width="1.6"/>';
+  g+='<path d="M300 78 L292 96 L308 96 L316 78 Z" fill="#63758f"/>';
+  g+='<circle cx="300" cy="100" r="6.5" fill="#1b2333" stroke="#5b6c86" stroke-width="1.6"/>';
+  g+='<circle cx="70" cy="34" r="3.4" fill="#ff5566" class="strobe"/>';
+  g+='<circle cx="212" cy="6" r="3" fill="#39e08a" class="strobe" style="animation-delay:.6s"/>';
+  g+='<circle cx="352" cy="-46" r="2.6" fill="#ffffff" class="strobe" style="animation-delay:1.1s"/>';
+  g+='<path d="M-6 60 L-120 92 L-120 104 L-6 74 Z" fill="#ffe9c2" opacity=".12"/>';
+  g+='</g>';
+  return g;
+}
+function tug(x,y){return '<g transform="translate('+x+','+y+')" opacity=".92">'
+  +'<rect x="0" y="10" width="46" height="18" rx="4" fill="#243450"/>'
+  +'<rect x="34" y="0" width="18" height="14" rx="3" fill="#2d4062"/>'
+  +'<circle cx="11" cy="30" r="6" fill="#0d1522" stroke="#43557a" stroke-width="1.4"/>'
+  +'<circle cx="35" cy="30" r="6" fill="#0d1522" stroke="#43557a" stroke-width="1.4"/>'
+  +'<circle cx="50" cy="8" r="2.6" fill="#ffe9c2" opacity=".9"/></g>'}
+function truck(x,y){return '<g transform="translate('+x+','+y+')" opacity=".92">'
+  +'<rect x="0" y="4" width="66" height="26" rx="4" fill="#2a3c5c"/>'
+  +'<rect x="66" y="10" width="24" height="20" rx="3" fill="#33486c"/>'
+  +'<rect x="6" y="9" width="52" height="4" rx="2" fill="#4a638d" opacity=".8"/>'
+  +'<circle cx="16" cy="34" r="7" fill="#0d1522" stroke="#43557a" stroke-width="1.4"/>'
+  +'<circle cx="44" cy="34" r="7" fill="#0d1522" stroke="#43557a" stroke-width="1.4"/>'
+  +'<circle cx="86" cy="22" r="2.6" fill="#ffe9c2" opacity=".9"/></g>'}
+function person(x,y){return '<g transform="translate('+x+','+y+')" opacity=".85">'
+  +'<circle cx="0" cy="0" r="3.4" fill="#2b3a57"/>'
+  +'<rect x="-3" y="3" width="6" height="14" rx="2.4" fill="#2b3a57"/>'
+  +'<rect x="-3" y="16" width="2.4" height="9" fill="#22304a"/>'
+  +'<rect x="0.8" y="16" width="2.4" height="9" fill="#22304a"/></g>'}
+
+function statusHex(c){return c==="red"?"#ff5566":c==="orange"?"#ffab4d":c==="green"?"#3ee0a4":"#5b6b8a"}
+
+function buildScene(){
+  var svg=$("#scene"); if(!svg)return;
+  svg.innerHTML=art();
+  renderBays();
+  renderWx();
+  renderSweep();
+}
+
+function renderBays(){
+  var layer=$("#htmlLayer"), list=$("#baylist");
+  if(!layer)return;
+  layer.innerHTML=""; if(list)list.innerHTML="";
+  for(var n=0;n<8;n++){
+    var m=S.missions[n]||null;
+    var col=m?readinessColor(m):"grey";
+    var hex=statusHex(col);
+    var num=("0"+(n+1)).slice(-2);
+    var x=hangarX(n);
+    var b=document.createElement("button");
+    b.className="bayhit";b.type="button";
+    b.style.left=((x+2)/1000*100)+"%";
+    b.style.top=((GEO.top+GEO.h+8)/560*100)+"%";
+    b.style.width=((GEO.w-4)/1000*100)+"%";
+    b.style.height="13.5%";
+    if(m){
+      var rd=S.ready[m.id]||{};
+      var tzt=(S.airports[m.destination]||{}).tz||(S.airports[m.origin]||{}).tz||"America/New_York";
+      b.innerHTML='<span class="bn">'+num+'</span>'
+        +'<span class="bw" style="color:'+hex+'">'+(m.is_example?'REHEARSAL':statusWord(col))+'</span>'
+        +'<span class="bm">'+esc((m.origin||"?")+" to "+(m.destination||"?"))+'</span>'
+        +'<span class="bm" data-tzclock="'+esc(tzt)+'">'+esc(tzTime(tzt))+' local</span>';
+      b.setAttribute("aria-label","Hangar "+num+", "+(m.origin||"unassigned")+" to "+(m.destination||"unassigned")+", "+statusWord(col)+", "+m.label);
+      b.onclick=function(mm){return function(){openMission(mm.id)}}(m);
+    }else{
+      b.innerHTML='<span class="bn" style="opacity:.5">'+num+'</span><span class="bw" style="color:#5b6b8a">EMPTY</span><span class="bm">no mission</span>';
+      b.setAttribute("aria-label","Hangar "+num+", empty, no mission assigned");
+      b.onclick=function(nn){return function(){toast("Hangar "+nn+" is empty. No mission assigned.")}}(num);
+    }
+    layer.appendChild(b);
+
+    /* phone list variant */
+    if(list){
+      var lb=document.createElement("button");
+      lb.className="bl";lb.type="button";
+      lb.innerHTML='<b>'+num+'</b><span style="color:'+hex+'">'+(m?(m.is_example?'REHEARSAL':statusWord(col)):'EMPTY')+'</span>'
+        +'<em>'+(m?esc((m.origin||"?")+" to "+(m.destination||"?")):'no mission')+'</em>'
+        +(m?'<em>'+esc(String((S.ready[m.id]||{}).open_orders||0))+' open order(s)</em>':'');
+      lb.onclick=(m?(function(mm){return function(){openMission(mm.id)}})(m):(function(nn){return function(){toast("Hangar "+nn+" is empty.")}})(num));
+      list.appendChild(lb);
+    }
+  }
+}
+
+function renderWx(){
+  var chip=$("#wxchip"); if(!chip)return;
+  var m=S.missions[0];
+  var code=m?(m.destination||m.origin):null;
+  if(!code){chip.innerHTML='<span class="wx-a">Weather</span><b>-</b><span style="color:#8fa3c7">no field</span>';return}
+  var c=COORD[code];
+  if(!c){chip.innerHTML='<span class="wx-a">'+esc(code)+'</span><b>n/a</b><span style="color:#8fa3c7">no coordinates on file</span>';return}
+  chip.innerHTML='<span class="wx-a">'+esc(code)+'</span><b>...</b><span style="color:#8fa3c7">reading field weather</span>';
+  var url="https://api.open-meteo.com/v1/forecast?latitude="+c[0]+"&longitude="+c[1]+"&current=temperature_2m,weather_code,wind_speed_10m&temperature_unit=celsius&wind_speed_unit=mph";
+  fetch(url).then(function(r){return r.json()}).then(function(j){
+    var cur=j&&j.current;if(!cur)throw new Error("no data");
+    var t=Math.round(cur.temperature_2m), w=WXCODE[cur.weather_code]||"conditions unknown", wind=Math.round(cur.wind_speed_10m);
+    chip.innerHTML='<span class="wx-a">'+esc(code)+' &middot; live</span><b>'+t+'&deg;C</b><span style="color:#c3d2ea">'+esc(w)+'</span><div style="color:#8fa3c7;margin-top:2px">wind '+wind+' mph</div>';
+    chip.setAttribute("title","Live weather at "+code+" from Open-Meteo, read at "+new Date().toLocaleTimeString());
+  }).catch(function(){
+    chip.innerHTML='<span class="wx-a">'+esc(code)+'</span><b>n/a</b><span style="color:#8fa3c7">weather feed unreachable</span>';
+  });
+}
+
+function realOnly(list){return list.filter(function(x){return !x.is_example})}
+function renderSweep(){
+  var counts={red:0,orange:0,green:0,grey:0},problems=[];
+  S.missions.forEach(function(m){
+    var c=readinessColor(m);counts[c==="red"?"red":c==="orange"?"orange":c==="green"?"green":"grey"]++;
+    if(c==="red")problems.push(m.label+(m.is_example?" (example)":""));
+  });
+  var empty=8-S.missions.length;
+  counts.grey+=empty>0?empty:0;
+  var s=$("#sweep");
+  if(!s)return;
+  s.innerHTML='<b>Sweep complete.</b> '+counts.red+' problem, '+counts.orange+' watch, '+counts.green+' clear, '+counts.grey+' not monitored.'
+    +(problems.length?'<span class="names">Problems: '+problems.map(esc).join(" &middot; ")+'</span>'
+      :'<span class="names">No mission is reporting a problem.</span>');
+
+  var now=Date.now();
+  var real=S.missions.filter(function(m){return !m.is_example});
+  var realIds={};real.forEach(function(m){realIds[m.id]=1});
+  var problemsReal=S.incidents.filter(function(i){return i.status==="open"&&!i.is_example&&realIds[i.mission_id]}).length;
+  var overdue=S.orders.filter(function(o){
+    if(!realIds[o.mission_id])return false;
+    if(["delivered","declined","cancelled"].indexOf(o.state)>=0)return false;
+    return o.due_at&&new Date(o.due_at).getTime()<now;
+  }).length;
+  var handoffs=(S.changes||[]).length;
+  var example=S.missions.length-real.length;
+
+  $("#oversight").innerHTML='<h4>Executive view &middot; counts come from the database &middot; example records are not counted</h4><div class="tiles">'
+    +'<div class="tile"><i>'+real.length+'</i><span>Real missions</span></div>'
+    +'<div class="tile"><i>'+example+'</i><span>Example records</span></div>'
+    +'<div class="tile '+(problemsReal?'red':'')+'"><i>'+problemsReal+'</i><span>Active problems</span></div>'
+    +'<div class="tile '+(overdue?'amber':'green')+'"><i>'+overdue+'</i><span>Overdue orders</span></div>'
+    +'<div class="tile"><i>'+handoffs+'</i><span>Written handoffs</span></div>'
+    +'</div>';
+}
+
+function updateClocks(){
+  var now=new Date();
+  document.querySelectorAll("text[data-tz]").forEach(function(t){
+    t.textContent=tzTime(t.getAttribute("data-tz"),now);
+  });
+  document.querySelectorAll("[data-tzclock]").forEach(function(t){
+    t.textContent=tzTime(t.getAttribute("data-tzclock"),now)+" local";
+  });
+}
+
+function openMission(id){
+  try{
+    var m=S.missions.filter(function(x){return x.id===id})[0];if(!m)return;
+    S.open=id;renderPanel(m);$("#panel").className="open";
+  }catch(e){toast("Could not open hangar: "+e.message);console.error(e)}
+}
+function closePanel(){S.open=null;$("#panel").className=""}
+function ordStateChip(st){
+  var c=st==="delivered"?"green":st==="confirmed"?"green":st==="declined"?"red":st==="failed"?"red":"amber";
+  return '<span class="chip '+chipClass(c)+'">'+esc(st||"unknown")+'</span>';
+}
+
+var NEXT={
+submitted:[["received","Vendor received it"],["cancelled","Cancel order"]],
+received:[["accepted","Vendor accepted"],["cancelled","Cancel order"]],
+delay_requested:[["accepted","Vendor accepted anyway"],["cancelled","Cancel order"]],
+accepted:[["preparing","Mark preparing"],["cancelled","Cancel order"]],
+preparing:[["ready","Mark ready"],["cancelled","Cancel order"]],
+ready:[["dispatched","Mark dispatched"],["cancelled","Cancel order"]],
+dispatched:[["delivered","Mark delivered"],["cancelled","Cancel order"]],
+delivered:[],declined:[],cancelled:[]};
+function humanState(s){return (s||"").replace(/_/g," ")}
+function orderActions(o){
+  var list=NEXT[o.state]||[];
+  if(!list.length)return '<span style="color:var(--mut);font-size:11.5px">No further action. This order is closed.</span>';
+  var out="";
+  list.forEach(function(p){
+    var st=p[0],label=p[1];
+    var cls=st==="declined"||st==="cancelled"?"bad":st==="delivered"?"pri":"";
+    out+='<button class="'+cls+'" data-act="move" data-state="'+st+'" data-id="'+o.id+'">'+esc(label)+'</button>';
+  });
+  return out;
+}
+
+function renderPanel(m){
+  var rd=S.ready[m.id]||{};
+  var tzO=(S.airports[m.origin]||{}).tz||"America/New_York";
+  var tzD=(S.airports[m.destination]||{}).tz||"America/New_York";
+  var orders=S.orders.filter(function(o){return o.mission_id===m.id});
+  var assigns=S.assign.filter(function(a){return a.mission_id===m.id});
+  var incs=S.incidents.filter(function(i){return i.mission_id===m.id});
+  var col=readinessColor(m);
+  var html="";
+  html+='<header><div class="n">'+("0"+(S.missions.findIndex(function(x){return x.id===m.id})+1)).slice(-2)+'</div><div class="t">'
+    +'<b>'+esc(m.label)+'</b><small>'+esc((m.origin&&m.destination)?(m.origin+" to "+m.destination):"route unassigned")
+    +' &middot; '+(m.departs_at?('departs '+esc(tzDate(m.departs_at,tzO))+(S.airports[m.origin]?" "+esc(S.airports[m.origin].tz.split("/")[1].replace("_"," ")):"")):'departure not set')+'</small>'
+    +'<div style="margin-top:6px"><span class="chip '+chipClass(col)+'">'+(col==="red"?"blocked":col==="orange"?"needs attention":col==="green"?"ready":"not monitored")+'</span>'
+    +(m.is_example?' <span class="chip c-grey">rehearsal</span>':'')+'</div></div>'
+    +'<button id="pclose" aria-label="Close">Close</button></header>';
+
+  html+='<div class="sec"><h3>Next action</h3><div class="kv">'
+    +'<dt>Action</dt><dd>'+esc(rd.next_action||"none stated")+'</dd>'
+    +'<dt>Owner</dt><dd>'+esc(rd.owner_id?rd.owner_id:"unassigned")+'</dd>'
+    +'<dt>Operator</dt><dd>'+(m.operator_confirmed?'<span class="chip c-green">confirmed</span>':'<span class="chip c-amber">not confirmed</span>')+'</dd>'
+    +'<dt>Open orders</dt><dd>'+esc(rd.open_orders||0)+' &middot; failed '+esc(rd.failed_orders||0)+' &middot; overdue acks '+esc(rd.overdue_acks||0)+'</dd>'
+    +'<dt>Blocking</dt><dd>'+esc(rd.blocking_incidents||0)+'</dd>'
+    +'<dt>Arrives</dt><dd>'+(m.arrives_at?esc(tzDate(m.arrives_at,tzD)):"not set")+'</dd>'
+    +'</div></div>';
+
+  html+='<div class="sec"><h3>Vendor confirmations ('+orders.length+')</h3>';
+  if(!orders.length)html+='<div class="empty">No vendor orders for this mission yet.</div>';
+  orders.forEach(function(o){
+    var v=S.vendors[o.vendor_id]||{name:"vendor "+o.vendor_id};
+    html+='<div class="ord"><div class="top"><b>'+esc(o.service||"(service)")+'</b>'+ordStateChip(o.state)+'</div>'
+      +'<div class="meta">'
+      +'<span>Vendor</span><span>'+esc(v.name)+'</span>'
+      +'<span>Due</span><span>'+esc(o.due_at?tzDate(o.due_at,tzD):"not set")+'</span>'
+      +'<span>Deliver to</span><span>'+esc(o.delivery_location||"not set")+'</span>'
+      +(o.dietary_instructions?'<span>Dietary</span><span>'+esc(o.dietary_instructions)+'</span>':'')
+      +(o.allergy_instructions?'<span>Allergies</span><span style="color:var(--red)">'+esc(o.allergy_instructions)+'</span>':'')
+      +'<span>Confirmed by</span><span>'+esc(o.written_confirmation||"nothing in writing yet")+'</span>'
+      +'<span>Responsible</span><span>'+esc(o.responsible||"unassigned")+'</span>'
+      +'</div><div class="acts">';
+    html+=orderActions(o);
+    html+='</div></div>';
+  });
+  html+='</div>';
+
+  html+='<div class="sec"><h3>Crew ('+assigns.length+')</h3>';
+  if(!assigns.length)html+='<div class="empty">No crew assigned to this mission.</div>';
+  else{html+='<div class="kv">';assigns.forEach(function(a){
+    var c=S.crew[a.crew_id]||{name:"crew "+a.crew_id};
+    html+='<dt>'+esc(c.name)+'</dt><dd>'+esc(a.state||"asked")+'</dd>';
+  });html+='</div>'}
+  html+='</div>';
+
+  var needs=(S.needs||[]).filter(function(n){return n.passenger_id&&n.passenger_id===m.passenger_id});
+  html+='<div class="sec"><h3>Client intake ('+needs.length+' recorded)</h3>';
+  if(!needs.length){
+    html+='<div class="empty">Passenger profiles recorded: 0.<br>Allergies, dietary, beverages, cabin temperature, blankets, seating, lighting, scent, flowers to avoid, amenities, accommodations. All unknown until recorded. Nothing here is guessed.</div>';
+  }else{
+    html+='<div class="kv">';
+    needs.forEach(function(n){
+      html+='<dt>'+esc(n.category||"need")+'</dt><dd>'+esc(n.detail||"")
+        +(n.severity?' <span class="chip '+(n.severity==="safety_critical"?"c-red":"c-grey")+'">'+esc(n.severity)+'</span>':'')+'</dd>';
+    });
+    html+='</div>';
+  }
+  html+='</div>';
+
+  if(incs.length){
+    html+='<div class="sec"><h3>Open incidents ('+incs.length+')</h3><div class="kv">';
+    incs.forEach(function(i){
+      html+='<dt style="color:'+(i.severity==="blocking"?"var(--red)":"var(--amber)")+'">'+esc(i.severity||"open")+'</dt>'
+        +'<dd>'+esc(i.title||"incident")+(i.required_action?'<br><span style="color:var(--mut);font-size:11.5px">'+esc(i.required_action)+'</span>':'')+'</dd>';
+    });
+    html+='</div></div>';
+  }
+  $("#sheet").innerHTML=html;
+  $("#pclose").onclick=closePanel;
+  $("#sheet").querySelectorAll("button[data-act]").forEach(function(b){
+    b.onclick=function(){doAction(b.getAttribute("data-act"),b.getAttribute("data-state"),b.getAttribute("data-id")?parseInt(b.getAttribute("data-id"),10):null,b)};
+  });
+}
+
+/* ---------------- write actions ---------------- */
+async function doAction(act,state,orderId,btn){
+  var o=S.orders.filter(function(x){return x.id===orderId})[0];if(!o)return;
+  var who=(S.me&&S.me.display_name)||(S.sess&&S.sess.email)||"unknown";
+  var role=(S.me&&S.me.role)||"coordinator";
+  var now=new Date().toISOString();
+  var patch={state:state},note="";
+  try{
+    if(state==="accepted"){
+      if(!o.vendor_responder){
+        var vr=prompt("Who at the vendor confirmed this? Name and role, or the email sender:","");
+        if(vr===null)return; if(!vr.trim()){toast("Vendor identity is required by the database. Nothing changed.");return}
+        patch.vendor_responder=vr.trim();
+      }
+      var wc=prompt("What is in writing? Quote number, email subject, or message reference:",o.written_confirmation||"");
+      if(wc===null)return; if(!wc.trim()){toast("A written confirmation reference is required. Nothing changed.");return}
+      patch.written_confirmation=wc.trim();patch.vendor_response_ref=wc.trim();patch.accepted_at=now;
+      note="accepted by "+(patch.vendor_responder||o.vendor_responder)+" ref "+(wc||"").trim();
+    }else if(state==="declined"){
+      var why=prompt("Reason the vendor gave for declining:","");
+      if(why===null)return; if(!why.trim()){toast("A decline reason is required by the database. Nothing changed.");return}
+      patch.decline_reason=why.trim();patch.declined_at=now;note="declined: "+why.trim();
+    }else if(state==="delivered"){
+      if(!o.delivery_location){
+        var dl=prompt("Where was it delivered? (FBO, tail number, or address):","");
+        if(dl===null)return; if(!dl.trim()){toast("Delivery location is required by the database. Nothing changed.");return}
+        patch.delivery_location=dl.trim();
+      }
+      var dby=prompt("Who delivered it? (vendor driver or courier name):","");
+      if(dby===null)return; if(!dby.trim()){toast("Delivered-by name is required by the database. Nothing changed.");return}
+      var rby=prompt("Who received it on the aircraft or at the FBO?",who);
+      if(rby===null)return; if(!rby.trim()){toast("Received-by name is required by the database. Nothing changed.");return}
+      patch.delivered_at=now;patch.delivered_by_name=dby.trim();patch.received_by_name=rby.trim();
+      note="delivered by "+dby.trim()+", received by "+rby.trim();
+    }else{
+      note="moved to "+humanState(state);
+    }
+    btn.disabled=true;btn.textContent="Saving...";
+    await sb("orders?id=eq."+orderId,{method:"PATCH",body:patch});
+    try{
+      await sb("order_events",{method:"POST",body:[{order_id:orderId,state:state,note:note,by_user:(S.sess&&S.sess.uid)||null,by_name:who,by_role:role,at:now}]});
+    }catch(e2){toast("Order saved, but the event log refused the note: "+e2.message)}
+    toast("Order "+orderId+" is now "+humanState(state));
+    await refreshAll();
+  }catch(e){
+    btn.disabled=false;btn.textContent="Retry";
+    toast("Not saved: "+(/policy|permission/i.test(e.message)?"your role is not allowed to do that":e.message));
+  }
+}
+
+/* ---------------- boot ---------------- */
+function renderAlert(){
+  var blocked=S.missions.filter(function(m){return readinessColor(m)==="red"});
+  var a=$("#alert");
+  if(blocked.length){
+    var first=blocked[0],rd=S.ready[first.id]||{};
+    a.style.display="block";
+    a.querySelector("b").textContent=blocked.length+(blocked.length>1?" MISSIONS BLOCKED":" MISSION BLOCKED");
+    a.querySelector("span").textContent="Next required action: "+(rd.next_action||"see mission");
+  }else{a.style.display="none"}
+}
+async function enterApp(){
+  $("#login").hidden=true;$("#app").hidden=false;
+  $("#who").textContent=(S.me?S.me.display_name+" ("+S.me.role+")":(S.sess&&S.sess.email)||"signed in");
+  $("#sync").textContent="synced "+new Date().toLocaleTimeString();
+  buildScene();updateClocks();
+  renderAlert();
+}
+async function signIn(email,pass){
+  var l=$("#lmsg");l.textContent="Signing in...";
+  try{
+    var t=await authPost("token?grant_type=password",{email:email,password:pass});
+    setSession(t);l.textContent="";
+    await loadAll();await enterApp();
+  }catch(e){l.textContent=e.message.indexOf("Invalid")>=0?"Email or password not recognised.":e.message}
+}
+async function boot(){
+  $("#signin").onclick=function(){signIn($("#em").value.trim(),$("#pw").value)};
+  $("#pw").addEventListener("keydown",function(e){if(e.key==="Enter")$("#signin").click()});
+  $("#refresh").onclick=function(){refreshAll().then(function(){toast("Refreshed from database")})};
+  $("#out").onclick=function(){clearSess();location.reload()};
+  document.addEventListener("keydown",function(e){if(e.key==="Escape")closePanel()});
+  $("#panel").addEventListener("click",function(e){if(e.target.id==="panel")closePanel()});
+  setInterval(updateClocks,1000);
+  S.sess=loadSess();
+  if(S.sess&&S.sess.refresh_token){
+    try{await loadAll();await enterApp();return}catch(e){clearSess()}
+  }
+  $("#login").hidden=false;$("#app").hidden=true;
+}
+boot();
+</script>
+</body></html>
