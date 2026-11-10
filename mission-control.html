@@ -88,10 +88,10 @@ function abc(){var g=sc(),all=allC();el(g,"rect",{width:703,height:487,fill:"#05
 el(a,"image",{href:IMG.abc,x:0,y:0,width:680,height:390});
 var r=el(a,"rect",{class:"pr",x:475,y:3,width:92,height:60,rx:6,style:"stroke:#c9ab6b;stroke-width:.8"});cD=tx(a,521,28,"pt","","fill:#8fa3c7;font-size:7px");cT=tx(a,521,50,"pt","","fill:#fff;font-size:15px");
 el(a,"rect",{class:"pr",x:578,y:3,width:98,height:122,rx:6,style:"stroke:#c9ab6b;stroke-width:.8"});
-tx(a,627,20,"pt","ABC · SNAPSHOT","fill:#c9ab6b;font-size:8px");tx(a,627,42,"pt","MISSION #1","fill:#8fa3c7;font-size:8px");tx(a,627,58,"pt","BLOCKED","fill:#ff4d5e;font-size:13px");
+tx(a,627,20,"pt","ABC · STATUS","fill:#c9ab6b;font-size:8px");tx(a,627,42,"pt","MISSION #1","fill:#8fa3c7;font-size:8px");tx(a,627,58,"pt","BLOCKED","fill:#ff4d5e;font-size:13px");
 tx(a,627,76,"pt",cnt(all,B)+" problems","fill:#ff4d5e;font-size:9px");tx(a,627,90,"pt",cnt(all,W)+" to watch","fill:#ffb020;font-size:9px");tx(a,627,104,"pt",cnt(all,G)+" clear","fill:#2ee6a6;font-size:9px");cS=tx(a,627,118,"pt",DATA_STATE.live?"LIVE · FROM DATABASE":"SIGN IN TO LOAD DATA","fill:#8fa3c7;font-size:6.5px");
 el(a,"rect",{class:"pr",x:316,y:304,width:90,height:54,rx:4,style:"stroke:#c9ab6b;stroke-width:.8"});tx(a,361,320,"pt","R-001 REHEARSAL","fill:#c9ab6b;font-size:7px");tx(a,361,333,"pt","TEB → FLL · 9:00","fill:#cfdcff;font-size:7.5px");tx(a,361,347,"pt",MHL[mh()],"fill:"+MHC[mh()]+";font-size:8.5px");
-el(a,"rect",{class:"pr",x:8,y:360,width:92,height:28,rx:4,style:"stroke:#c9ab6b;stroke-width:.8"});tx(a,54,377,"pt","SNAPSHOT · 7 OCT 2026","fill:#8fa3c7;font-size:6.2px");
+el(a,"rect",{class:"pr",x:8,y:360,width:92,height:28,rx:4,style:"stroke:#c9ab6b;stroke-width:.8"});tx(a,54,377,"pt",DATA_STATE.live?"LIVE · FROM DATABASE":"STATUS · NOT LOADED","fill:#8fa3c7;font-size:6.2px");
 K.forEach(function(k,i){var d=C[k],s=stOf(d[1]),b=BR[i],n=el(a,"g",{class:"nd s-"+s,tabindex:0,role:"button","aria-label":d[0]});
 el(n,"rect",{class:"hs",x:b[0],y:b[1],width:b[2],height:b[3],rx:5});plate(n,PL[i][0],PL[i][1],PL[i][2],15,s,stLab(d[1]),7.5);
 n.onclick=function(){go(k,d[0],(b[0]+b[2]/2)*1.0338,42+(b[1]+b[3]/2)*1.0338)};g.nodes.push({g:n,n:d[0],s:s})});
