@@ -397,9 +397,16 @@ swap("in",351,243);
 var SB_URL="https://xacwvpxfutczxsqxykiu.supabase.co",SB_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhhY3d2cHhmdXRjenhzcXh5a2l1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI2OTc0ODYsImV4cCI6MjA5ODI3MzQ4Nn0.a2MvwEYNFaR2gir3DfThl7N4fE2cZxQZX8ySSQc5a8E";
 function sbq(){return LIVE.sb.schema("mission_control")}
 function fr(m){m=String(m||"");return /confirmed_needs_writing/.test(m)?"you can't confirm without the vendor's written confirmation":/not approved/.test(m)?"that vendor is not approved for orders":/invalid order change/.test(m)?"that change isn't allowed for your role":/row-level security/.test(m)?"your role isn't allowed to do that":m}
-async function liveBoot(){try{if(!window.supabase||SB_KEY.indexOf("PASTE")==0)return;
+function b64j(s){try{return JSON.parse(decodeURIComponent(escape(atob(String(s).replace(/-/g,"+").replace(/_/g,"/")))))}catch(e){return null}}
+function jwtEmail(t){try{var p=String(t||"").split(".")[1];var o=p?b64j(p):null;return o?(o.email||(o.user_metadata&&o.user_metadata.email)||""):""}catch(e){return""}}
+function preSession(){try{var at=localStorage.getItem("abc_access");if(at)return{email:jwtEmail(at),token:at};var k=Object.keys(localStorage).filter(function(x){return /^sb-.*-auth-token$/.test(x)})[0];if(k){var s=JSON.parse(localStorage.getItem(k)||"null");s=s&&(s.currentSession||s);if(s&&s.access_token)return{email:(s.user&&s.user.email)||jwtEmail(s.access_token),token:s.access_token}}var hz=JSON.parse(localStorage.getItem("abc.portal.sess.v1")||"null");if(hz&&hz.access_token)return{email:jwtEmail(hz.access_token),token:hz.access_token}}catch(e){}return null}
+function stateBar(t,k){var m=document.getElementById("mode");if(!m)return;if(k=="ok"){m.style.background="rgba(46,230,166,.10)";m.style.color="#2ee6a6"}else{m.style.background="rgba(255,176,32,.12)";m.style.color="#ffb020"}m.textContent=t}
+function showPreIdentity(pre){var w=document.getElementById("who");if(w)w.innerHTML='<span>SIGNED IN</span><b style="flex:1;color:#e8f0ff">'+esc(pre.email||"your account")+'</b><button onclick="liveOut()" style="flex:none;padding:9px 12px">SIGN OUT</button>';stateBar("SIGNED IN · LOADING LIVE STATUS","ok")}
+async function liveBoot(){try{var pre=preSession();if(pre)showPreIdentity(pre);
+if(!window.supabase){stateBar("COULD NOT LOAD THE SIGN-IN LIBRARY · RELOAD THE PAGE","warn");return}
+if(SB_KEY.indexOf("PASTE")==0)return;
 var ctl=new AbortController(),to=setTimeout(function(){ctl.abort()},4000);
-var h=await fetch(SB_URL+"/auth/v1/health",{headers:{apikey:SB_KEY},signal:ctl.signal});clearTimeout(to);if(!h.ok)return;
+var h=await fetch(SB_URL+"/auth/v1/health",{headers:{apikey:SB_KEY},signal:ctl.signal});clearTimeout(to);if(!h.ok){stateBar("SIGN-IN SERVICE UNREACHABLE · TRY AGAIN IN A MOMENT","warn");return}
 LIVE.sb=window.supabase.createClient(SB_URL,SB_KEY);
 LIVE.sb.auth.onAuthStateChange(function(ev,s){if(s&&!LIVE.on)liveSession()});
 var s=(await LIVE.sb.auth.getSession()).data.session;
