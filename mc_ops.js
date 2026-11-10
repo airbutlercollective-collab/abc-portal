@@ -72,6 +72,36 @@ MC.hangars=function(a,g){
   }
   MC.decorate(a,list);
 };
+MC.drawAirport=function(a,g){MC.hangars(a,g);MC.seats(a)};
+
+MC.seats=function(a){
+  var list=missionsActive().slice(MC.page*8,MC.page*8+8),signed=MC.signed();
+  var ns='http://www.w3.org/2000/svg';
+  var g=document.createElementNS(ns,'g');g.setAttribute('class','seats');
+  for(var i=0;i<8;i++){
+    var col=i%4,row=Math.floor(i/4);
+    var x=304+col*30, y=row?233:219, mis=list[i]||null;
+    var n=document.createElementNS(ns,'g');
+    n.setAttribute('class','nd seat '+(mis?'s-'+colOf(mis):'s-off'));
+    n.setAttribute('tabindex','0');n.setAttribute('role','button');
+    var r=document.createElementNS(ns,'rect');
+    r.setAttribute('x',x);r.setAttribute('y',y);r.setAttribute('width',22);r.setAttribute('height',10);
+    r.setAttribute('rx',3);
+    r.setAttribute('fill',mis?(colOf(mis)==='red'?'rgba(255,77,94,.85)':colOf(mis)==='orange'?'rgba(255,176,32,.85)':'rgba(46,230,166,.85)'):'rgba(8,16,34,.55)');
+    r.setAttribute('stroke',mis?'rgba(255,255,255,.55)':'rgba(143,163,199,.45)');
+    r.setAttribute('stroke-width','.7');
+    n.appendChild(r);
+    var tt=document.createElementNS(ns,'title');
+    tt.textContent='SEAT '+(i+1)+(mis?' · '+shortName(mis)+' · '+statusWord(readiness(mis.id)||{},mis).toUpperCase():' · open');
+    n.appendChild(tt);
+    n.setAttribute('aria-label','Seat '+(i+1)+(mis?' '+shortName(mis):' open'));
+    n.onclick=(function(m){return function(){if(m)MC.openMission(m.id);else MC.openOps()}})(mis);
+    g.appendChild(n);
+    if(a&&a.nodes)a.nodes.push({g:n,n:'Seat '+(i+1),s:mis?colOf(mis):'off'});
+  }
+  a.appendChild(g);
+};
+
 MC.decorate=function(a,list){
   if(!a||!a.querySelectorAll)return;
   var openInc=q('incidents').filter(function(i){return s(i.status).toLowerCase()!=='resolved'}).length;
@@ -139,6 +169,10 @@ MC.openOps=function(){
     h+='</div>';
     if(list.length>per)h+='<div class="pager"><button id="pv">\u2039 PREV</button><span>SHOWING '+(MC.page*per+1)+'\u2013'+Math.min(list.length,MC.page*per+per)+' OF '+list.length+'</span><button id="nx">NEXT \u203A</button></div>';
   }
+  var seatsH='<h4>SEAT MAP \u00B7 CLIENT OCCUPANCY</h4><div class="seats">';
+  for(var si=0;si<8;si++){var sm=list[si];seatsH+='<span class="seat'+(sm?' on':'')+'"><b>'+(si+1)+'</b>'+esc2(sm?shortName(sm):'open')+'</span>'}
+  seatsH+='</div><div class="seatnote">'+Math.min(list.length,8)+' of 8 cabin seats assigned to a client mission.</div>';
+  h+=seatsH;
   var acts=[];
   list.forEach(function(m){var rd=readiness(m.id)||{};if(rd.next_action)acts.push({m:shortName(m),t:rd.next_action,w:''})});
   q('open_items').forEach(function(it){if(it.what&&acts.length<14)acts.push({m:it.mission_id?('#'+it.mission_id):'COMPANY',t:it.what,w:s(it.responsible)})});
