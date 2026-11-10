@@ -196,7 +196,8 @@ MC.openMission=function(id){
 };
 MC.signed=function(){try{if(window.LIVE&&LIVE.on)return true;if(typeof preSession==='function')return !!preSession()}catch(e){}return false};
 function bootMC(){
-  var t=0;(function go(){t++;if(window.LIVE&&LIVE.sb&&MC.signed()){MC.load();return}if(t<90)setTimeout(go,1000)})();
+  setTimeout(function(){try{MC.updateScene()}catch(e){}},1400);
+  var t=0;(function go(){t++;if(window.LIVE&&LIVE.sb&&MC.signed()){MC.load();return}if(t<90){if(t===4)MC.updateScene();setTimeout(go,1000)}})();
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bootMC);else bootMC();
 window.addEventListener('keydown',function(e){if(e.key==='Escape'&&MC.open)MC.close()});
