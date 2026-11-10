@@ -89,7 +89,7 @@ MC.decorate=function(a,list){
     else if(v==='STATUS \u00B7 NOT LOADED'||v==='STATUS \u00B7 NOT LOADED'||v==='LIVE \u00B7 FROM DATABASE')t.textContent=MC.ready?'LIVE \u00B7 FROM DATABASE':'SIGN IN TO LOAD DATA';
   }
 };
-MC.hash=function(){try{var h=s(location.hash).replace('#','');if(h==='ops')MC.openOps();else if(/^m\d+$/.test(h))MC.openMission(h.slice(1));}catch(e){}};
+MC.hash=function(){try{var h=s(location.hash).replace('#','');var v='';var mm=s(location.search).match(/[?&]view=([a-z0-9]+)/i);if(mm)v=mm[1];if(h==='ops'||v==='ops')MC.openOps();else if(/^m\d+$/.test(h))MC.openMission(h.slice(1));else if(/^m\d+$/.test(v))MC.openMission(v.slice(1));}catch(e){document.title='hash err '+e.message}};
 window.addEventListener('hashchange',function(){if(MC.ready)MC.hash()});
 MC.updateScene=function(){try{if(typeof build==='function'&&typeof path!=='undefined'&&path.length&&path[path.length-1][0]==='abc')refresh()}catch(e){}};
 function sheet(){
