@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Air Butler Collective - Mission Control</title>
+<link rel="apple-touch-icon" href="data:,">
+<style>
+:root{--bg:#050b1c;--ink:#e8f0ff;--mut:#8fa3c7;--gold:#c9ab6b;--line:#1b2a4a;
+--red:#ff4d5e;--amber:#ffa53d;--green:#2ee6a6;--grey:#46536b;color-scheme:dark}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+padding:10px 10px calc(28px + env(safe-area-inset-bottom,0px));max-width:960px;margin-inline:auto}
+h1{margin:6px 0 2px;font:400 11px/1 Georgia,serif;letter-spacing:.34em;color:var(--gold);text-align:center;text-transform:uppercase}
+.sub{text-align:center;color:var(--mut);font-size:10.5px;letter-spacing:.22em;text-transform:uppercase;margin-bottom:10px}
+.alert{display:none;margin:0 0 10px;padding:9px 12px;border-left:3px solid var(--red);background:rgba(255,77,94,.09);
+border-radius:0 6px 6px 0;font-size:12px}
+.alert b{color:var(--red);letter-spacing:.08em}
+.alert span{color:var(--mut);display:block;margin-top:2px}
+.stagewrap{position:relative;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:#040814}
+svg#scene{display:block;width:100%;height:auto;touch-action:manipulation}
+.legend{display:flex;gap:14px;justify-content:center;margin:8px 0 0;font-size:10.5px;color:var(--mut);letter-spacing:.06em;flex-wrap:wrap}
+.legend i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px;vertical-align:1px}
+.bar{display:flex;align-items:center;gap:10px;margin-top:12px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;
+font-size:11px;color:var(--mut);letter-spacing:.04em}
+.bar .who{color:var(--ink)}
+.bar button{margin-left:auto}
+button{font:inherit;cursor:pointer;border-radius:6px;border:1px solid var(--line);background:#0c1630;color:var(--ink);padding:7px 11px;font-size:11.5px;letter-spacing:.06em}
+button.pri{background:rgba(46,230,166,.12);border-color:rgba(46,230,166,.45);color:var(--green)}
+button.warn{background:rgba(255,165,61,.12);border-color:rgba(255,165,61,.45);color:var(--amber)}
+button.bad{background:rgba(255,77,94,.12);border-color:rgba(255,77,94,.45);color:var(--red)}
+button:disabled{opacity:.45;cursor:default}
+#login{max-width:380px;margin:14vh auto 0;padding:18px;border:1px solid var(--line);border-radius:12px;background:#08101f}
+#login h2{font:400 12px/1 Georgia,serif;letter-spacing:.3em;color:var(--gold);text-align:center;margin:4px 0 16px}
+label{display:block;font-size:11px;letter-spacing:.1em;color:var(--mut);margin:10px 0 4px}
+input{width:100%;padding:10px;border-radius:6px;border:1px solid var(--line);background:#04091a;color:var(--ink);font:inherit}
+#login button{width:100%;margin-top:14px;padding:11px}
+.lmsg{margin-top:10px;font-size:11.5px;color:var(--amber);min-height:16px;text-align:center}
+/* drill panel */
+#panel{position:fixed;inset:0;background:rgba(3,7,18,.86);backdrop-filter:blur(3px);display:none;z-index:40;overflow-y:auto;
+padding:12px 10px calc(24px + env(safe-area-inset-bottom,0px))}
+#panel.open{display:block}
+.sheet{max-width:720px;margin:0 auto;border:1px solid var(--line);border-radius:12px;background:#070f21;overflow:hidden}
+.sheet header{display:flex;align-items:flex-start;gap:10px;padding:12px 14px;border-bottom:1px solid var(--line);background:#0a1428}
+.sheet header .n{font:400 22px/1 Georgia,serif;color:var(--gold);letter-spacing:.06em}
+.sheet header .t{flex:1;min-width:0}
+.sheet header .t b{display:block;font-size:14px;font-weight:600}
+.sheet header .t small{color:var(--mut);font-size:11px;letter-spacing:.06em}
+.chip{display:inline-block;padding:2px 7px;border-radius:20px;font-size:10px;letter-spacing:.12em;text-transform:uppercase;border:1px solid}
+.c-red{color:var(--red);border-color:rgba(255,77,94,.5);background:rgba(255,77,94,.1)}
+.c-amber{color:var(--amber);border-color:rgba(255,165,61,.5);background:rgba(255,165,61,.1)}
+.c-green{color:var(--green);border-color:rgba(46,230,166,.5);background:rgba(46,230,166,.1)}
+.c-grey{color:var(--mut);border-color:var(--line);background:rgba(143,163,199,.06)}
+.sec{padding:12px 14px;border-bottom:1px solid var(--line)}
+.sec h3{margin:0 0 8px;font:400 10.5px/1 system-ui;letter-spacing:.2em;text-transform:uppercase;color:var(--mut)}
+.kv{display:grid;grid-template-columns:110px 1fr;gap:4px 10px;font-size:12.5px}
+.kv dt{color:var(--mut);font-size:11px;letter-spacing:.06em}
+.kv dd{margin:0}
+.ord{border:1px solid var(--line);border-radius:8px;padding:10px;margin-bottom:9px;background:#060d1d}
+.ord .top{display:flex;gap:8px;align-items:baseline;margin-bottom:6px}
+.ord .top b{flex:1;font-size:12.5px;font-weight:600}
+.ord .meta{font-size:11.5px;color:var(--mut);display:grid;grid-template-columns:96px 1fr;gap:2px 8px}
+.ord .acts{display:flex;gap:7px;margin-top:9px;flex-wrap:wrap}
+.empty{color:var(--mut);font-size:12px;font-style:italic}
+#toast{position:fixed;left:50%;transform:translateX(-50%);bottom:22px;max-width:92vw;padding:10px 14px;border-radius:8px;
+background:#0c1a33;border:1px solid var(--line);font-size:12px;display:none;z-index:60;text-align:center}
+#toast.show{display:block}
+</style></head>
+<body>
+
+<h1>Air Butler Collective</h1>
+<div class="sub">Mission Control</div>
+<div class="alert" id="alert"><b></b><span></span></div>
+
+<div id="login" hidden>
+  <h2>Sign in</h2>
+  <label for="em">Email</label><input id="em" type="email" autocomplete="username" inputmode="email">
+  <label for="pw">Password</label><input id="pw" type="password" autocomplete="current-password">
+  <button id="signin" class="pri">Sign in</button>
+  <div class="lmsg" id="lmsg"></div>
+</div>
+
+<div id="app" hidden>
+  <div class="stagewrap"><svg id="scene" viewBox="0 0 1000 620" role="img" aria-label="Air Butler Collective airport with eight mission hangars"></svg></div>
+  <div class="legend">
+    <span><i style="background:var(--green)"></i>Ready</span>
+    <span><i style="background:var(--amber)"></i>Needs attention</span>
+    <span><i style="background:var(--red)"></i>Blocked</span>
+    <span><i style="background:var(--grey)"></i>Empty</span>
+  </div>
+  <div class="bar"><span class="who" id="who">-</span><span id="sync"></span><button id="refresh">Refresh</button><button id="out">Sign out</button></div>
+</div>
+
+<div id="panel" aria-live="polite"><div class="sheet" id="sheet"></div></div>
+<div id="toast"></div>
+
+<script>
+/* ---------------- config ---------------- */
+var SB_URL="https://xacwvpxfutczxsqxykiu.supabase.co";
+var SB_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhhY3d2cHhmdXRjenhzcXh5a2l1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI2OTc0ODYsImV4cCI6MjA5ODI3MzQ4Nn0.a2MvwEYNFaR2gir3DfThl7N4fE2cZxQZX8ySSQc5a8E";
+var SKEY="abc.portal.sess.v1";
+var S={sess:null,me:null,missions:[],ready:{},orders:[],vendors:{},crew:{},assign:[],incidents:[],airports:{},open:null};
+
+/* ---------------- helpers ---------------- */
+function $(s){return document.querySelector(s)}
+function el(t,a,txt){var e=document.createElementNS("http://www.w3.org/2000/svg",t);for(var k in (a||{}))e.setAttribute(k,a[k]);if(txt!=null)e.textContent=txt;return e}
+function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+function toast(m){var t=$("#toast");t.textContent=m;t.className="show";clearTimeout(t._x);t._x=setTimeout(function(){t.className=""},3200)}
+function colorOf(c){return c==="red"?"var(--red)":c==="orange"?"var(--amber)":c==="green"?"var(--green)":"var(--grey)"}
+function chipClass(c){return c==="red"?"c-red":c==="orange"?"c-amber":c==="green"?"c-green":"c-grey"}
+function tzTime(tz,when){
+  try{return new Intl.DateTimeFormat("en-US",{hour:"2-digit",minute:"2-digit",hour12:false,timeZone:tz}).format(when||new Date())}
+  catch(e){return"--:--"}
+}
+function tzDate(iso,tz){
+  if(!iso)return"not set";
+  try{return new Intl.DateTimeFormat("en-US",{weekday:"short",month:"short",day:"numeric",hour:"2-digit",minute:"2-digit",timeZone:tz||"America/New_York"}).format(new Date(iso))}
+  catch(e){return new Date(iso).toLocaleString()}
+}
+function readinessColor(m){var r=S.ready[m.id];return (r&&r.color)||(m.status==="blocked"?"red":"grey")}
+
+/* ---------------- auth ---------------- */
+function saveSess(s){S.sess=s;try{localStorage.setItem(SKEY,JSON.stringify(s))}catch(e){}}
+function loadSess(){try{var r=localStorage.getItem(SKEY);return r?JSON.parse(r):null}catch(e){return null}}
+function clearSess(){S.sess=null;try{localStorage.removeItem(SKEY)}catch(e){}}
+
+async function authPost(path,body,extra){
+  var r=await fetch(SB_URL+"/auth/v1/"+path,{method:"POST",
+    headers:Object.assign({"apikey":SB_KEY,"Content-Type":"application/json"},extra||{}),
+    body:body?JSON.stringify(body):undefined});
+  var j=await r.json().catch(function(){return{}});
+  if(!r.ok)throw new Error(j.error_description||j.msg||j.error||("HTTP "+r.status));
+  return j;
+}
+function setSession(t){
+  if(!t||!t.access_token)return;
+  saveSess({access_token:t.access_token,refresh_token:t.refresh_token,expires_at:Date.now()+(t.expires_in||3600)*1000-60000,email:(t.user&&t.user.email)||(S.sess&&S.sess.email)||""});
+}
+async function refreshSess(){
+  if(!S.sess||!S.sess.refresh_token)return false;
+  if(S.sess.expires_at&&Date.now()<S.sess.expires_at)return true;
+  try{var t=await authPost("token?grant_type=refresh_token",{refresh_token:S.sess.refresh_token});setSession(t);return true}
+  catch(e){clearSess();return false}
+}
+function token(){return S.sess?S.sess.access_token:null}
+
+/* ---------------- data ---------------- */
+async function sb(path,opts){
+  opts=opts||{};
+  var ok=await refreshSess();
+  if(!ok)throw new Error("session expired");
+  var r=await fetch(SB_URL+"/rest/v1/"+path,{method:opts.method||"GET",
+    headers:Object.assign({"apikey":SB_KEY,"Authorization":"Bearer "+token(),"Accept-Profile":opts.schema||"mission_control","Content-Profile":opts.schema||"mission_control",
+      "Content-Type":"application/json","Prefer":opts.prefer||"return=representation"},{}),
+    body:opts.body?JSON.stringify(opts.body):undefined});
+  var txt=await r.text();
+  var j=txt?JSON.parse(txt):null;
+  if(!r.ok)throw new Error((j&&(j.message||j.hint))||("HTTP "+r.status));
+  return j;
+}
+async function loadAll(){
+  var mePromise=sb("profiles?select=user_id,display_name,role&user_id=eq."+encodeURIComponent(await uid()),{schema:"mission_control"}).catch(function(){return[]});
+  var res=await Promise.all([
+    sb("missions?select=id,label,origin,destination,departs_at,arrives_at,status,operator_confirmed,notes,is_example&order=id.asc"),
+    sb("mission_readiness?select=*"),
+    sb("orders?select=id,mission_id,vendor_id,service,state,due_at,ack_due_at,delivery_location,dietary_instructions,allergy_instructions,written_confirmation,responsible,updated_at,status_color&order=id.asc"),
+    sb("vendors?select=id,name,category"),
+    sb("crew?select=id,name,crew_role,status&active=eq.true"),
+    sb("mission_assignments?select=id,mission_id,crew_id,state"),
+    sb("incidents?select=id,mission_id,title,status,severity,required_action&status=eq.open"),
+    sb("airports?select=code,name,tz")
+  ]);
+  S.missions=res[0]||[];S.ready={};(res[1]||[]).forEach(function(r){S.ready[r.mission_id]=r});
+  S.orders=res[2]||[];S.vendors={};(res[3]||[]).forEach(function(v){S.vendors[v.id]=v});
+  S.crew={};(res[4]||[]).forEach(function(c){S.crew[c.id]=c});
+  S.assign=res[5]||[];S.incidents=res[6]||[];S.airports={};(res[7]||[]).forEach(function(a){S.airports[a.code]=a});
+  S.me=(await mePromise)[0]||null;
+}
+async function uid(){
+  if(S.sess&&S.sess.uid)return S.sess.uid;
+  var r=await fetch(SB_URL+"/auth/v1/user",{headers:{"apikey":SB_KEY,"Authorization":"Bearer "+token()}});
+  var j=await r.json();if(j&&j.id){S.sess.uid=j.id;saveSess(S.sess);return j.id}
+  throw new Error("cannot resolve user");
+}
+
+async function refreshAll(){
+  try{
+    await loadAll();buildScene();updateClocks();
+    $("#who").textContent=(S.me?S.me.display_name+" ("+S.me.role+")":(S.sess&&S.sess.email)||"signed in");
+    $("#sync").textContent="synced "+new Date().toLocaleTimeString();
+    renderAlert();
+    if(S.open!=null){var m=S.missions.filter(function(x){return x.id===S.open})[0];if(m)renderPanel(m);else closePanel()}
+  }catch(e){toast("Refresh failed: "+e.message)}
+}
+
+/* ---------------- scene ---------------- */
+function buildScene(){
+  var svg=$("#scene");svg.textContent="";
+  var defs=el("defs");
+  var sky=el("linearGradient",{id:"sky",x1:"0",y1:"0",x2:"0",y2:"1"});
+  sky.appendChild(el("stop",{offset:"0","stop-color":"#060d21"}));
+  sky.appendChild(el("stop",{offset:".55","stop-color":"#0b1734"}));
+  sky.appendChild(el("stop",{offset:".82","stop-color":"#1a2444"}));
+  sky.appendChild(el("stop",{offset:"1","stop-color":"#2a2b46"}));
+  defs.appendChild(sky);
+  var apron=el("linearGradient",{id:"apron",x1:"0",y1:"0",x2:"0",y2:"1"});
+  apron.appendChild(el("stop",{offset:"0","stop-color":"#101a30"}));
+  apron.appendChild(el("stop",{offset:"1","stop-color":"#060b18"}));
+  defs.appendChild(apron);
+  ["red","amber","green","grey"].forEach(function(k){
+    var c=k==="red"?"#ff4d5e":k==="amber"?"#ffa53d":k==="green"?"#2ee6a6":"#46536b";
+    var g=el("radialGradient",{id:"glow-"+k});
+    g.appendChild(el("stop",{offset:"0","stop-color":c,"stop-opacity":".55"}));
+    g.appendChild(el("stop",{offset:"1","stop-color":c,"stop-opacity":"0"}));
+    defs.appendChild(g);
+  });
+  svg.appendChild(defs);
+  svg.appendChild(el("rect",{x:0,y:0,width:1000,height:620,fill:"url(#sky)"}));
+
+  // stars
+  var s=el("g",{opacity:".5"});
+  for(var i=0;i<70;i++){
+    var x=(i*137.5)%1000, y=(i*61.3)%230;
+    s.appendChild(el("circle",{cx:x.toFixed(1),cy:y.toFixed(1),r:(i%7===0?1.1:.6),fill:"#cfd9ff","fill-opacity":".55"}));
+  }
+  svg.appendChild(s);
+
+  // horizon band
+  svg.appendChild(el("rect",{x:0,y:246,width:1000,height:120,fill:"#141c33","fill-opacity":".55"}));
+  svg.appendChild(el("rect",{x:0,y:358,width:1000,height:262,fill:"url(#apron)"}));
+
+  // control tower (centre, behind hangars)
+  var tw=el("g");
+  tw.appendChild(el("rect",{x:486,y:212,width:28,height:150,fill:"#111c33",stroke:"#22304f","stroke-width":1.5}));
+  tw.appendChild(el("rect",{x:472,y:186,width:56,height:30,rx:3,fill:"#16233d",stroke:"#2b3c60","stroke-width":1.5}));
+  tw.appendChild(el("rect",{x:478,y:192,width:44,height:15,rx:2,fill:"#8fd7ff","fill-opacity":".18"}));
+  tw.appendChild(el("circle",{cx:500,cy:181,r:3,fill:"#ff4d5e"}));
+  tw.appendChild(el("text",{x:500,y:176,"text-anchor":"middle","font-size":"8.5","letter-spacing":"2.4",fill:"#c9ab6b"})).textContent="ABC";
+  svg.appendChild(tw);
+
+  // runway + jet
+  svg.appendChild(el("rect",{x:60,y:566,width:880,height:26,rx:3,fill:"#0a1120",stroke:"#1b2742"}));
+  for(var d=0;d<22;d++){
+    svg.appendChild(el("rect",{x:74+d*40,y:577,width:20,height:3,rx:1.5,fill:"#33415f"}));
+  }
+  var jet=el("g",{transform:"translate(760,520) scale(.9)"});
+  jet.appendChild(el("path",{d:"M0 0 L64 0 L78 10 L64 20 L0 20 L-14 10 Z",fill:"#1c2942",stroke:"#3a4c72","stroke-width":1.4}));
+  jet.appendChild(el("path",{d:"M26 0 L14 -20 L30 -20 L46 -2 Z",fill:"#22314e",stroke:"#3a4c72","stroke-width":1.2}));
+  jet.appendChild(el("path",{d:"M26 20 L14 40 L30 40 L46 22 Z",fill:"#22314e",stroke:"#3a4c72","stroke-width":1.2}));
+  jet.appendChild(el("path",{d:"M78 10 L92 4 L92 16 Z",fill:"#22314e",stroke:"#3a4c72","stroke-width":1.2}));
+  jet.appendChild(el("circle",{cx:6,cy:10,r:2.2,fill:"#2ee6a6","fill-opacity":".8"}));
+  svg.appendChild(jet);
+
+  // eight hangars
+  var slots=8;
+  for(var n=0;n<slots;n++){
+    var m=S.missions[n]||null;
+    var col=m?readinessColor(m):"grey";
+    var hex=col==="red"?"#ff4d5e":col==="amber"?"#ffa53d":col==="green"?"#2ee6a6":"#46536b";
+    var cx=110+n*111, baseY=386, hh=96, w=92;
+    var g=el("g",{class:"bay","data-i":n,style:"cursor:pointer"});
+    g.appendChild(el("ellipse",{cx:cx,cy:baseY+8,rx:w*.72,ry:26,fill:"url(#glow-"+col+")"}));
+    g.appendChild(el("rect",{x:cx-w/2,y:baseY-hh,width:w,height:hh,rx:4,fill:"#0d1730",stroke:"#243352","stroke-width":1.4}));
+    g.appendChild(el("path",{d:"M"+(cx-w/2-6)+" "+(baseY-hh)+" L"+cx+" "+(baseY-hh-16)+" L"+(cx+w/2+6)+" "+(baseY-hh)+" Z",fill:"#15223c",stroke:"#2b3c60","stroke-width":1.2}));
+    // hangar door with glow
+    g.appendChild(el("rect",{x:cx-w/2+12,y:baseY-hh+26,width:w-24,height:hh-30,rx:2,fill:hex,"fill-opacity":m?".16":".07",stroke:hex,"stroke-opacity":m?".55":".22","stroke-width":1.2}));
+    // number
+    var num=el("text",{x:cx,y:baseY-hh+52,"text-anchor":"middle","font-family":"Georgia,serif","font-size":"24",fill:hex,"fill-opacity":m?".95":".5"});
+    num.textContent=("0"+(n+1)).slice(-2);g.appendChild(num);
+    if(m){
+      var dest=m.destination||"---";
+      g.appendChild(el("text",{x:cx,y:baseY+24,"text-anchor":"middle","font-size":"11","letter-spacing":"1.2",fill:"#e8f0ff"})).textContent=(m.origin||"---")+" to "+dest;
+      var tzt=(S.airports[m.destination]||{}).tz||(S.airports[m.origin]||{}).tz||"America/New_York";
+      var clk=el("text",{x:cx,y:baseY+38,"text-anchor":"middle","font-size":"9.5","letter-spacing":"1",fill:"#8fa3c7","data-tz":tzt,class:"clk"});
+      clk.textContent=tzTime(tzt);g.appendChild(clk);
+      var rd=S.ready[m.id]||{};
+      var line=(rd.open_orders||0)+" open";
+      if((rd.blocking_incidents||0)>0)line=(rd.blocking_incidents)+" BLOCKED";
+      g.appendChild(el("text",{x:cx,y:baseY+50,"text-anchor":"middle","font-size":"8.8","letter-spacing":".9",fill:hex})).textContent=line.toUpperCase();
+      if(m.is_example){
+        g.appendChild(el("text",{x:cx,y:baseY-hh-22,"text-anchor":"middle","font-size":"8","letter-spacing":"1.4",fill:"#c9ab6b"})).textContent="REHEARSAL";
+      }
+    }else{
+      g.appendChild(el("text",{x:cx,y:baseY-hh+46,"text-anchor":"middle","font-size":"9.5","letter-spacing":"1.6",fill:"#46536b"})).textContent="EMPTY";
+      g.appendChild(el("text",{x:cx,y:baseY-24,"text-anchor":"middle","font-size":"8.6","letter-spacing":"1",fill:"#3c4a66"})).textContent="no mission";
+    }
+    (function(mm){
+      g.addEventListener("click",function(){
+        if(!mm){toast("Hangar "+(n+1)+" is empty. No mission assigned.");return}
+        openMission(mm.id);
+      });
+    })(m);
+    svg.appendChild(g);
+  }
+  svg.appendChild(el("text",{x:500,y:608,"text-anchor":"middle","font-size":"9","letter-spacing":"2.6",fill:"#5b6d92"})).textContent="TAP A HANGAR TO ENTER THE MISSION";
+}
+
+function updateClocks(){
+  var now=new Date();
+  document.querySelectorAll("text[data-tz]").forEach(function(t){
+    t.textContent=tzTime(t.getAttribute("data-tz"),now);
+  });
+}
+
+/* ---------------- panel ---------------- */
+function openMission(id){
+  var m=S.missions.filter(function(x){return x.id===id})[0];if(!m)return;
+  S.open=id;renderPanel(m);$("#panel").className="open";
+}
+function closePanel(){S.open=null;$("#panel").className=""}
+function ordStateChip(st){
+  var c=st==="delivered"?"green":st==="confirmed"?"green":st==="declined"?"red":st==="failed"?"red":"amber";
+  return '<span class="chip '+chipClass(c)+'">'+esc(st||"unknown")+'</span>';
+}
+
+var NEXT={
+submitted:[["received","Vendor received it"],["cancelled","Cancel order"]],
+received:[["accepted","Vendor accepted"],["cancelled","Cancel order"]],
+delay_requested:[["accepted","Vendor accepted anyway"],["cancelled","Cancel order"]],
+accepted:[["preparing","Mark preparing"],["cancelled","Cancel order"]],
+preparing:[["ready","Mark ready"],["cancelled","Cancel order"]],
+ready:[["dispatched","Mark dispatched"],["cancelled","Cancel order"]],
+dispatched:[["delivered","Mark delivered"],["cancelled","Cancel order"]],
+delivered:[],declined:[],cancelled:[]};
+function humanState(s){return (s||"").replace(/_/g," ")}
+function orderActions(o){
+  var list=NEXT[o.state]||[];
+  if(!list.length)return '<span style="color:var(--mut);font-size:11.5px">No further action. This order is closed.</span>';
+  var out="";
+  list.forEach(function(p){
+    var st=p[0],label=p[1];
+    var cls=st==="declined"||st==="cancelled"?"bad":st==="delivered"?"pri":"";
+    out+='<button class="'+cls+'" data-act="move" data-state="'+st+'" data-id="'+o.id+'">'+esc(label)+'</button>';
+  });
+  return out;
+}
+
+function renderPanel(m){
+  var rd=S.ready[m.id]||{};
+  var tzO=(S.airports[m.origin]||{}).tz||"America/New_York";
+  var tzD=(S.airports[m.destination]||{}).tz||"America/New_York";
+  var orders=S.orders.filter(function(o){return o.mission_id===m.id});
+  var assigns=S.assign.filter(function(a){return a.mission_id===m.id});
+  var incs=S.incidents.filter(function(i){return i.mission_id===m.id});
+  var col=readinessColor(m);
+  var html="";
+  html+='<header><div class="n">'+("0"+(S.missions.findIndex(function(x){return x.id===m.id})+1)).slice(-2)+'</div><div class="t">'
+    +'<b>'+esc(m.label)+'</b><small>'+esc(m.origin||"---")+' to '+esc(m.destination||"---")
+    +' &middot; departs '+esc(tzDate(m.departs_at,tzO))+' '+esc((S.airports[m.origin]||{}).tz?"local":"")+'</small>'
+    +'<div style="margin-top:6px"><span class="chip '+chipClass(col)+'">'+(col==="red"?"blocked":col==="orange"?"needs attention":col==="green"?"ready":"not monitored")+'</span>'
+    +(m.is_example?' <span class="chip c-grey">rehearsal</span>':'')+'</div></div>'
+    +'<button id="pclose" aria-label="Close">Close</button></header>';
+
+  html+='<div class="sec"><h3>Next action</h3><div class="kv">'
+    +'<dt>Action</dt><dd>'+esc(rd.next_action||"none stated")+'</dd>'
+    +'<dt>Owner</dt><dd>'+esc(rd.owner_id?rd.owner_id:"unassigned")+'</dd>'
+    +'<dt>Operator</dt><dd>'+(m.operator_confirmed?'<span class="chip c-green">confirmed</span>':'<span class="chip c-amber">not confirmed</span>')+'</dd>'
+    +'<dt>Open orders</dt><dd>'+esc(rd.open_orders||0)+' &middot; failed '+esc(rd.failed_orders||0)+' &middot; overdue acks '+esc(rd.overdue_acks||0)+'</dd>'
+    +'<dt>Blocking</dt><dd>'+esc(rd.blocking_incidents||0)+'</dd>'
+    +'<dt>Arrives</dt><dd>'+esc(tzDate(m.arrives_at,tzD))+' '+esc((S.airports[m.destination]||{}).tz?"local":"")+'</dd>'
+    +'</div></div>';
+
+  html+='<div class="sec"><h3>Vendor confirmations ('+orders.length+')</h3>';
+  if(!orders.length)html+='<div class="empty">No vendor orders for this mission yet.</div>';
+  orders.forEach(function(o){
+    var v=S.vendors[o.vendor_id]||{name:"vendor "+o.vendor_id};
+    html+='<div class="ord"><div class="top"><b>'+esc(o.service||"(service)")+'</b>'+ordStateChip(o.state)+'</div>'
+      +'<div class="meta">'
+      +'<span>Vendor</span><span>'+esc(v.name)+'</span>'
+      +'<span>Due</span><span>'+esc(o.due_at?tzDate(o.due_at,tzD):"not set")+'</span>'
+      +'<span>Deliver to</span><span>'+esc(o.delivery_location||"not set")+'</span>'
+      +(o.dietary_instructions?'<span>Dietary</span><span>'+esc(o.dietary_instructions)+'</span>':'')
+      +(o.allergy_instructions?'<span>Allergies</span><span style="color:var(--red)">'+esc(o.allergy_instructions)+'</span>':'')
+      +'<span>Confirmed by</span><span>'+esc(o.written_confirmation||"nothing in writing yet")+'</span>'
+      +'<span>Responsible</span><span>'+esc(o.responsible||"unassigned")+'</span>'
+      +'</div><div class="acts">';
+    html+=orderActions(o);
+    html+='</div></div>';
+  });
+  html+='</div>';
+
+  html+='<div class="sec"><h3>Crew ('+assigns.length+')</h3>';
+  if(!assigns.length)html+='<div class="empty">No crew assigned to this mission.</div>';
+  else{html+='<div class="kv">';assigns.forEach(function(a){
+    var c=S.crew[a.crew_id]||{name:"crew "+a.crew_id};
+    html+='<dt>'+esc(c.name)+'</dt><dd>'+esc(a.state||"asked")+'</dd>';
+  });html+='</div>'}
+  html+='</div>';
+
+  if(incs.length){
+    html+='<div class="sec"><h3>Open incidents ('+incs.length+')</h3><div class="kv">';
+    incs.forEach(function(i){
+      html+='<dt style="color:'+(i.severity==="blocking"?"var(--red)":"var(--amber)")+'">'+esc(i.severity||"open")+'</dt>'
+        +'<dd>'+esc(i.title||"incident")+(i.required_action?'<br><span style="color:var(--mut);font-size:11.5px">'+esc(i.required_action)+'</span>':'')+'</dd>';
+    });
+    html+='</div></div>';
+  }
+  $("#sheet").innerHTML=html;
+  $("#pclose").onclick=closePanel;
+  $("#sheet").querySelectorAll("button[data-act]").forEach(function(b){
+    b.onclick=function(){doAction(b.getAttribute("data-act"),b.getAttribute("data-state"),b.getAttribute("data-id")?parseInt(b.getAttribute("data-id"),10):null,b)};
+  });
+}
+
+/* ---------------- write actions ---------------- */
+async function doAction(act,state,orderId,btn){
+  var o=S.orders.filter(function(x){return x.id===orderId})[0];if(!o)return;
+  var who=(S.me&&S.me.display_name)||(S.sess&&S.sess.email)||"unknown";
+  var role=(S.me&&S.me.role)||"coordinator";
+  var now=new Date().toISOString();
+  var patch={state:state},note="";
+  try{
+    if(state==="accepted"){
+      if(!o.vendor_responder){
+        var vr=prompt("Who at the vendor confirmed this? Name and role, or the email sender:","");
+        if(vr===null)return; if(!vr.trim()){toast("Vendor identity is required by the database. Nothing changed.");return}
+        patch.vendor_responder=vr.trim();
+      }
+      var wc=prompt("What is in writing? Quote number, email subject, or message reference:",o.written_confirmation||"");
+      if(wc===null)return; if(!wc.trim()){toast("A written confirmation reference is required. Nothing changed.");return}
+      patch.written_confirmation=wc.trim();patch.vendor_response_ref=wc.trim();patch.accepted_at=now;
+      note="accepted by "+(patch.vendor_responder||o.vendor_responder)+" ref "+(wc||"").trim();
+    }else if(state==="declined"){
+      var why=prompt("Reason the vendor gave for declining:","");
+      if(why===null)return; if(!why.trim()){toast("A decline reason is required by the database. Nothing changed.");return}
+      patch.decline_reason=why.trim();patch.declined_at=now;note="declined: "+why.trim();
+    }else if(state==="delivered"){
+      if(!o.delivery_location){
+        var dl=prompt("Where was it delivered? (FBO, tail number, or address):","");
+        if(dl===null)return; if(!dl.trim()){toast("Delivery location is required by the database. Nothing changed.");return}
+        patch.delivery_location=dl.trim();
+      }
+      var dby=prompt("Who delivered it? (vendor driver or courier name):","");
+      if(dby===null)return; if(!dby.trim()){toast("Delivered-by name is required by the database. Nothing changed.");return}
+      var rby=prompt("Who received it on the aircraft or at the FBO?",who);
+      if(rby===null)return; if(!rby.trim()){toast("Received-by name is required by the database. Nothing changed.");return}
+      patch.delivered_at=now;patch.delivered_by_name=dby.trim();patch.received_by_name=rby.trim();
+      note="delivered by "+dby.trim()+", received by "+rby.trim();
+    }else{
+      note="moved to "+humanState(state);
+    }
+    btn.disabled=true;btn.textContent="Saving...";
+    await sb("orders?id=eq."+orderId,{method:"PATCH",body:patch});
+    try{
+      await sb("order_events",{method:"POST",body:[{order_id:orderId,state:state,note:note,by_user:(S.sess&&S.sess.uid)||null,by_name:who,by_role:role,at:now}]});
+    }catch(e2){toast("Order saved, but the event log refused the note: "+e2.message)}
+    toast("Order "+orderId+" is now "+humanState(state));
+    await refreshAll();
+  }catch(e){
+    btn.disabled=false;btn.textContent="Retry";
+    toast("Not saved: "+(/policy|permission/i.test(e.message)?"your role is not allowed to do that":e.message));
+  }
+}
+
+/* ---------------- boot ---------------- */
+function renderAlert(){
+  var blocked=S.missions.filter(function(m){return readinessColor(m)==="red"});
+  var a=$("#alert");
+  if(blocked.length){
+    var first=blocked[0],rd=S.ready[first.id]||{};
+    a.style.display="block";
+    a.querySelector("b").textContent=blocked.length+(blocked.length>1?" MISSIONS BLOCKED":" MISSION BLOCKED");
+    a.querySelector("span").textContent="Next required action: "+(rd.next_action||"see mission");
+  }else{a.style.display="none"}
+}
+async function enterApp(){
+  $("#login").hidden=true;$("#app").hidden=false;
+  $("#who").textContent=(S.me?S.me.display_name+" ("+S.me.role+")":(S.sess&&S.sess.email)||"signed in");
+  $("#sync").textContent="synced "+new Date().toLocaleTimeString();
+  buildScene();updateClocks();
+  renderAlert();
+}
+async function signIn(email,pass){
+  var l=$("#lmsg");l.textContent="Signing in...";
+  try{
+    var t=await authPost("token?grant_type=password",{email:email,password:pass});
+    setSession(t);l.textContent="";
+    await loadAll();await enterApp();
+  }catch(e){l.textContent=e.message.indexOf("Invalid")>=0?"Email or password not recognised.":e.message}
+}
+async function boot(){
+  $("#signin").onclick=function(){signIn($("#em").value.trim(),$("#pw").value)};
+  $("#pw").addEventListener("keydown",function(e){if(e.key==="Enter")$("#signin").click()});
+  $("#refresh").onclick=function(){refreshAll().then(function(){toast("Refreshed from database")})};
+  $("#out").onclick=function(){clearSess();location.reload()};
+  document.addEventListener("keydown",function(e){if(e.key==="Escape")closePanel()});
+  $("#panel").addEventListener("click",function(e){if(e.target.id==="panel")closePanel()});
+  setInterval(updateClocks,1000);
+  S.sess=loadSess();
+  if(S.sess&&S.sess.refresh_token){
+    try{await loadAll();await enterApp();return}catch(e){clearSess()}
+  }
+  $("#login").hidden=false;$("#app").hidden=true;
+}
+boot();
+</script>
+</body></html>
