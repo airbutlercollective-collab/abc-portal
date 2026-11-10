@@ -257,7 +257,9 @@ function buildScene(){
     var col=m?readinessColor(m):"grey";
     var hex=col==="red"?"#ff4d5e":col==="amber"?"#ffa53d":col==="green"?"#2ee6a6":"#46536b";
     var cx=110+n*111, baseY=386, hh=96, w=92;
-    var g=el("g",{class:"bay","data-i":n,style:"cursor:pointer"});
+    var bayLabel=m?("Hangar "+("0"+(n+1)).slice(-2)+", "+(m.origin||"unassigned")+" to "+(m.destination||"unassigned")+", "+m.label)
+      :("Hangar "+("0"+(n+1)).slice(-2)+", empty, no mission assigned");
+    var g=el("g",{class:"bay","data-i":n,style:"cursor:pointer",tabindex:"0",role:"button","aria-label":bayLabel});
     g.appendChild(el("ellipse",{cx:cx,cy:baseY+8,rx:w*.72,ry:26,fill:"url(#glow-"+col+")"}));
     g.appendChild(el("rect",{x:cx-w/2,y:baseY-hh,width:w,height:hh,rx:4,fill:"#0d1730",stroke:"#243352","stroke-width":1.4}));
     g.appendChild(el("path",{d:"M"+(cx-w/2-6)+" "+(baseY-hh)+" L"+cx+" "+(baseY-hh-16)+" L"+(cx+w/2+6)+" "+(baseY-hh)+" Z",fill:"#15223c",stroke:"#2b3c60","stroke-width":1.2}));
@@ -267,8 +269,9 @@ function buildScene(){
     var num=el("text",{x:cx,y:baseY-hh+52,"text-anchor":"middle","font-family":"Georgia,serif","font-size":"24",fill:hex,"fill-opacity":m?".95":".5"});
     num.textContent=("0"+(n+1)).slice(-2);g.appendChild(num);
     if(m){
-      var dest=m.destination||"---";
-      g.appendChild(el("text",{x:cx,y:baseY+24,"text-anchor":"middle","font-size":"11","letter-spacing":"1.2",fill:"#e8f0ff"})).textContent=(m.origin||"---")+" to "+dest;
+      var dest=m.destination||"";
+      var route=(m.origin&&m.destination)?(m.origin+" to "+m.destination):"route unassigned";
+      g.appendChild(el("text",{x:cx,y:baseY+24,"text-anchor":"middle","font-size":"11","letter-spacing":"1.2",fill:"#e8f0ff"})).textContent=route;
       var tzt=(S.airports[m.destination]||{}).tz||(S.airports[m.origin]||{}).tz||"America/New_York";
       var clk=el("text",{x:cx,y:baseY+38,"text-anchor":"middle","font-size":"9.5","letter-spacing":"1",fill:"#8fa3c7","data-tz":tzt,class:"clk"});
       clk.textContent=tzTime(tzt);g.appendChild(clk);
@@ -284,10 +287,12 @@ function buildScene(){
       g.appendChild(el("text",{x:cx,y:baseY-24,"text-anchor":"middle","font-size":"8.6","letter-spacing":"1",fill:"#3c4a66"})).textContent="no mission";
     }
     (function(mm){
-      g.addEventListener("click",function(){
+      function go(){
         if(!mm){toast("Hangar "+(n+1)+" is empty. No mission assigned.");return}
         openMission(mm.id);
-      });
+      }
+      g.addEventListener("click",go);
+      g.addEventListener("keydown",function(e){if(e.key==="Enter"||e.key===" "){e.preventDefault();go()}});
     })(m);
     svg.appendChild(g);
   }
@@ -344,7 +349,7 @@ function renderPanel(m){
   var col=readinessColor(m);
   var html="";
   html+='<header><div class="n">'+("0"+(S.missions.findIndex(function(x){return x.id===m.id})+1)).slice(-2)+'</div><div class="t">'
-    +'<b>'+esc(m.label)+'</b><small>'+esc(m.origin||"---")+' to '+esc(m.destination||"---")
+    +'<b>'+esc(m.label)+'</b><small>'+esc((m.origin&&m.destination)?(m.origin+" to "+m.destination):"route unassigned")
     +' &middot; departs '+esc(tzDate(m.departs_at,tzO))+' '+esc((S.airports[m.origin]||{}).tz?"local":"")+'</small>'
     +'<div style="margin-top:6px"><span class="chip '+chipClass(col)+'">'+(col==="red"?"blocked":col==="orange"?"needs attention":col==="green"?"ready":"not monitored")+'</span>'
     +(m.is_example?' <span class="chip c-grey">rehearsal</span>':'')+'</div></div>'
