@@ -17,9 +17,12 @@ border-radius:0 6px 6px 0;font-size:12px}
 .alert b{color:var(--red);letter-spacing:.08em}
 .alert span{color:var(--mut);display:block;margin-top:2px}
 .stagewrap{position:relative;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#050a18;box-shadow:inset 0 -40px 80px rgba(0,0,0,.55)}
-.scene{position:relative;width:100%;aspect-ratio:1000/560}
+.scene{position:relative;width:100%;aspect-ratio:1000/600;max-height:62vh;margin:0 auto;border-radius:10px;overflow:hidden}
 .scene svg{position:absolute;inset:0;width:100%;height:100%;display:block}
-.scene .htmlLayer{position:absolute;inset:0}
+.scene .htmlLayer{position:absolute;inset:0;pointer-events:none}
+.bayhit{pointer-events:auto}
+.jethit{background:transparent;border-color:transparent}
+.jethit:hover,.jethit:focus-visible{border-color:rgba(255,215,154,.5);background:rgba(255,215,154,.06)}
 .bayhit{position:absolute;background:linear-gradient(180deg,rgba(6,12,28,.0),rgba(6,12,28,.72));border:1px solid rgba(120,150,200,.22);border-radius:9px;padding:7px 8px 6px;cursor:pointer;color:inherit;font:inherit;text-align:left;overflow:hidden;transition:border-color .15s,background .15s}
 .bayhit:hover,.bayhit:focus-visible{border-color:rgba(201,171,107,.75);background:linear-gradient(180deg,rgba(10,18,40,.25),rgba(6,12,28,.85));outline:none}
 .bayhit .bn{display:block;font:400 13px/1 Georgia,serif;color:#e8f0ff;letter-spacing:.06em}
@@ -103,6 +106,33 @@ padding:12px 10px calc(24px + env(safe-area-inset-bottom,0px))}
 #toast{position:fixed;left:50%;transform:translateX(-50%);bottom:22px;max-width:92vw;padding:10px 14px;border-radius:8px;
 background:#0c1a33;border:1px solid var(--line);font-size:12px;display:none;z-index:60;text-align:center}
 #toast.show{display:block}
+
+.ops{position:fixed;inset:0;z-index:70;background:rgba(3,6,13,.9);display:flex;justify-content:center;align-items:flex-start;padding:16px;overflow:auto}
+.ops[hidden]{display:none}
+.ops-in{width:min(780px,100%);background:#0a1120;border:1px solid #24334f;border-radius:12px;padding:16px 16px 22px;color:#dbe6f7}
+.ops-in h2{font-family:Georgia,serif;font-size:15px;letter-spacing:3px;margin:0 0 2px;color:#f4e7cd}
+.ops-in .sub{font-size:10.5px;color:#8fa3c7;letter-spacing:1px;text-transform:uppercase;margin-bottom:12px}
+.ops-tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(96px,1fr));gap:8px;margin-bottom:14px}
+.ops-tile{background:#0f1a2d;border:1px solid #24334f;border-radius:8px;padding:8px 10px}
+.ops-tile i{font-family:Georgia,serif;font-size:20px;font-style:normal;color:#f1e5cd;display:block;line-height:1.1}
+.ops-tile span{font-size:9px;letter-spacing:1px;text-transform:uppercase;color:#8fa3c7}
+.ops-row{display:grid;grid-template-columns:34px 1fr auto;gap:10px;align-items:center;padding:10px;border:1px solid #1c2a42;border-radius:8px;margin-bottom:8px;background:#0d1728;cursor:pointer;text-align:left;width:100%;color:inherit;font:inherit}
+.ops-row:hover,.ops-row:focus-visible{border-color:#3c5680;background:#122038;outline:none}
+.ops-row .n{font-family:Georgia,serif;font-size:13px;color:#8fa3c7}
+.ops-row b{font-size:12.5px}
+.ops-row small{display:block;color:#9fb2d1;font-size:10.5px;margin-top:2px}
+.ops-row .wx{font-size:10.5px;color:#ffd79a;text-align:right;min-width:78px}
+.seats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:9px;margin-bottom:12px}
+.seat{position:relative;background:linear-gradient(180deg,#14243c,#0d1728);border:1px solid #26374f;border-radius:12px 12px 14px 14px;padding:10px 10px 9px;text-align:left;color:inherit;font:inherit;cursor:pointer;transition:border-color .15s,transform .1s}
+.seat:hover,.seat:focus-visible{border-color:#4a689b;transform:translateY(-1px);outline:none}
+.seat:before{content:"";position:absolute;left:10px;right:10px;top:0;height:3px;border-radius:3px;background:var(--seatc,#5b6b8a)}
+.seat .sn{font-family:Georgia,serif;font-size:9.5px;letter-spacing:1.6px;color:#8fa3c7}
+.seat b{display:block;font-size:12px;margin:2px 0 3px}
+.seat small{display:block;font-size:10px;color:#9fb2d1;line-height:1.45}
+.seat .wxl{color:#ffd79a}
+.seat.empty{opacity:.45;cursor:default}
+.seat.empty:hover{transform:none;border-color:#26374f}
+.ops-close{float:right;background:#16233a;border:1px solid #2b3d5c;color:#dbe6f7;border-radius:7px;padding:5px 10px;font-size:11px;cursor:pointer}
 </style></head>
 <body>
 
@@ -118,6 +148,12 @@ background:#0c1a33;border:1px solid var(--line);font-size:12px;display:none;z-in
   <div class="lmsg" id="lmsg"></div>
 </div>
 
+<div id="ops" class="ops" hidden><div class="ops-in" role="dialog" aria-modal="true" aria-labelledby="opstitle">
+  <button class="ops-close" id="opsclose" aria-label="Close operations">Close</button>
+  <h2 id="opstitle">ALL FLIGHT OPERATIONS</h2>
+  <div class="sub" id="opssub">every client, every field, live from the database</div>
+  <div id="opsbody"></div>
+</div></div>
 <div id="app" hidden>
   <div class="stagewrap">
     <div class="scene">
@@ -247,7 +283,7 @@ async function refreshAll(){
 /* ---------------- scene ---------------- */
 
 /* ---------------- the field ---------------- */
-var GEO={x0:56,w:106,gap:12,top:252,h:152,vb:{w:1000,h:560}};
+var GEO={rows:[{x0:40,y:238},{x0:516,y:238}],w:100,gap:12,h:130,vb:{w:1000,h:600}};
 var COORD={TEB:[40.850,-74.061],FLL:[26.072,-80.153],HPN:[41.067,-73.708],MMU:[40.799,-74.415],
 JFK:[40.639,-73.779],LGA:[40.777,-73.873],EWR:[40.693,-74.169],PBI:[26.683,-80.096],MIA:[25.793,-80.290],
 OPF:[25.907,-80.278],VNY:[34.210,-118.490],LAX:[33.942,-118.408],SRQ:[27.395,-82.554],RSW:[26.536,-81.755],
@@ -260,124 +296,137 @@ var WXCODE={0:"clear",1:"mostly clear",2:"partly cloudy",3:"overcast",45:"fog",4
 71:"light snow",73:"snow",75:"heavy snow",80:"rain showers",81:"rain showers",82:"heavy showers",
 95:"thunderstorms",96:"thunderstorms",99:"severe storms"};
 
-function hangarX(n){return GEO.x0+n*(GEO.w+GEO.gap)}
+function hangarPos(n){
+  var row=GEO.rows[n<4?0:1], k=n%4;
+  return {x:row.x0+k*(GEO.w+GEO.gap), y:row.y};
+}
+function hangarX(n){return hangarPos(n).x}
 
 function art(){
   var s='';
   s+='<defs>'
-   +'<linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">'
-   +'<stop offset="0" stop-color="#04081a"/><stop offset=".34" stop-color="#111a3e"/>'
-   +'<stop offset=".62" stop-color="#33274f"/><stop offset=".84" stop-color="#7d4356"/>'
-   +'<stop offset="1" stop-color="#c8764a"/></linearGradient>'
-   +'<radialGradient id="sunglow" cx=".5" cy=".5" r=".5">'
-   +'<stop offset="0" stop-color="#ffc07a" stop-opacity=".9"/><stop offset=".4" stop-color="#ee8a45" stop-opacity=".4"/>'
-   +'<stop offset="1" stop-color="#ee8a45" stop-opacity="0"/></radialGradient>'
-   +'<linearGradient id="apron" x1="0" y1="0" x2="0" y2="1">'
-   +'<stop offset="0" stop-color="#1b2540"/><stop offset=".3" stop-color="#111a2e"/>'
-   +'<stop offset=".72" stop-color="#0a1120"/><stop offset="1" stop-color="#05090f"/></linearGradient>'
-   +'<linearGradient id="door" x1="0" y1="1" x2="0" y2="0">'
-   +'<stop offset="0" stop-color="#fff0cf" stop-opacity="1"/><stop offset=".22" stop-color="#ffdca4" stop-opacity=".95"/>'
-   +'<stop offset=".5" stop-color="#f0ac66" stop-opacity=".72"/><stop offset=".78" stop-color="#9c6630" stop-opacity=".4"/>'
-   +'<stop offset="1" stop-color="#3d2714" stop-opacity=".16"/></linearGradient>'
-   +'<radialGradient id="pool" cx=".5" cy=".5" r=".5">'
-   +'<stop offset="0" stop-color="#ffcf94" stop-opacity=".55"/><stop offset=".55" stop-color="#e39a52" stop-opacity=".22"/>'
-   +'<stop offset="1" stop-color="#e39a52" stop-opacity="0"/></radialGradient>'
-   +'<linearGradient id="fus" x1="0" y1="0" x2="0" y2="1">'
-   +'<stop offset="0" stop-color="#f2f7ff"/><stop offset=".3" stop-color="#cbd8ec"/>'
-   +'<stop offset=".62" stop-color="#8fa2c0"/><stop offset="1" stop-color="#465872"/></linearGradient>'
-   +'<linearGradient id="wing" x1="0" y1="0" x2="0" y2="1">'
-   +'<stop offset="0" stop-color="#b6c6de"/><stop offset="1" stop-color="#42536f"/></linearGradient>'
-   +'<linearGradient id="beam" x1="0" y1="0" x2="0" y2="1">'
-   +'<stop offset="0" stop-color="#ffe7c0" stop-opacity=".22"/><stop offset="1" stop-color="#ffe7c0" stop-opacity="0"/></linearGradient>'
-   +'<linearGradient id="fore" x1="0" y1="0" x2="0" y2="1">'
-   +'<stop offset="0" stop-color="#04070e" stop-opacity="0"/><stop offset="1" stop-color="#02050a" stop-opacity=".95"/></linearGradient>'
-   +'</defs>';
+    +'<linearGradient id="sky" x1="0" y1="1" x2="0" y2="0">'
+      +'<stop offset="0" stop-color="#3d2b52"/><stop offset=".28" stop-color="#2a2a55"/>'
+      +'<stop offset=".62" stop-color="#141d3c"/><stop offset="1" stop-color="#070d20"/></linearGradient>'
+    +'<radialGradient id="sunglow" cx=".5" cy=".5" r=".5">'
+      +'<stop offset="0" stop-color="#ffb973" stop-opacity=".55"/>'
+      +'<stop offset=".45" stop-color="#d8704f" stop-opacity=".22"/>'
+      +'<stop offset="1" stop-color="#d8704f" stop-opacity="0"/></radialGradient>'
+    +'<linearGradient id="apron" x1="0" y1="0" x2="0" y2="1">'
+      +'<stop offset="0" stop-color="#1a2234"/><stop offset=".55" stop-color="#121a2a"/>'
+      +'<stop offset="1" stop-color="#0a1120"/></linearGradient>'
+    +'<linearGradient id="door" x1="0" y1="1" x2="0" y2="0">'
+      +'<stop offset="0" stop-color="#fff2d2"/><stop offset=".34" stop-color="#ffd79a"/>'
+      +'<stop offset=".72" stop-color="#c07e45" stop-opacity=".72"/>'
+      +'<stop offset="1" stop-color="#40301f" stop-opacity=".5"/></linearGradient>'
+    +'<linearGradient id="spill" x1="0" y1="0" x2="0" y2="1">'
+      +'<stop offset="0" stop-color="#ffbe7d" stop-opacity=".46"/>'
+      +'<stop offset="1" stop-color="#ffbe7d" stop-opacity="0"/></linearGradient>'
+    +'<radialGradient id="pool"><stop offset="0" stop-color="#ffc98a" stop-opacity=".34"/>'
+      +'<stop offset="1" stop-color="#ffc98a" stop-opacity="0"/></radialGradient>'
+    +'<linearGradient id="body" x1="0" y1="0" x2="0" y2="1">'
+      +'<stop offset="0" stop-color="#dbe6f7"/><stop offset=".45" stop-color="#b7c8e4"/>'
+      +'<stop offset="1" stop-color="#6d7f9f"/></linearGradient>'
+    +'<linearGradient id="wing" x1="0" y1="0" x2="0" y2="1">'
+      +'<stop offset="0" stop-color="#a9bcd9"/><stop offset="1" stop-color="#5e7092"/></linearGradient>'
+    +'<linearGradient id="glass" x1="0" y1="0" x2="1" y2="1">'
+      +'<stop offset="0" stop-color="#8fe3ff" stop-opacity=".92"/>'
+      +'<stop offset="1" stop-color="#2f6f94" stop-opacity=".85"/></linearGradient>'
+    +'<radialGradient id="jetglow"><stop offset="0" stop-color="#ffe6bb" stop-opacity=".30"/>'
+      +'<stop offset="1" stop-color="#ffe6bb" stop-opacity="0"/></radialGradient>'
+    +'<linearGradient id="fg" x1="0" y1="0" x2="0" y2="1">'
+      +'<stop offset="0" stop-color="#04070f" stop-opacity="0"/>'
+      +'<stop offset="1" stop-color="#04070f" stop-opacity=".85"/></linearGradient>'
+    +'</defs>';
 
-  /* sky */
-  s+='<rect x="0" y="0" width="1000" height="216" fill="url(#sky)"/>';
-  s+='<circle cx="806" cy="214" r="168" fill="url(#sunglow)"/>';
-  var stars=[[54,34],[126,66],[198,26],[268,84],[332,44],[398,20],[462,78],[524,38],[588,62],[650,28],[712,84],[774,46],[836,72],[898,32],[942,88],[96,112],[286,118],[498,124],[664,110],[860,118]];
-  stars.forEach(function(p,i){
-    s+='<circle cx="'+p[0]+'" cy="'+p[1]+'" r="'+(i%3===0?1.6:1)+'" fill="#eaf1ff" opacity="'+(i%4===0?".85":".4")+'"'+(i%5===0?' class="ripple" style="animation-delay:'+(i*0.4)+'s"':'')+'/>';
+  /* dusk sky */
+  s+='<rect x="0" y="0" width="1000" height="200" fill="url(#sky)"/>';
+  s+='<circle cx="815" cy="196" r="185" fill="url(#sunglow)"/>';
+  var st=[[42,30],[96,64],[150,22],[210,52],[268,36],[330,70],[392,26],[455,58],[520,40],[584,74],
+          [640,30],[700,54],[760,24],[826,60],[888,38],[944,66],[978,26],[128,88],[356,92],[620,96],[864,90]];
+  st.forEach(function(p,i){
+    s+='<circle cx="'+p[0]+'" cy="'+p[1]+'" r="'+(i%3===0?1.5:1)+'" fill="#e8f0ff" opacity="'+(0.28+(i%5)*0.11).toFixed(2)+'"/>';
   });
 
-  /* distant city line */
-  s+='<path transform="translate(0,-86)" d="M0 300 L0 272 L40 272 L40 258 L66 258 L66 274 L106 274 L106 246 L132 246 L132 268 L166 268 L166 260 L202 260 L202 242 L226 242 L226 266 L266 266 L266 254 L304 254 L304 272 L342 272 L342 248 L370 248 L370 264 L414 264 L414 256 L452 256 L452 272 L500 272 L500 252 L530 252 L530 268 L570 268 L570 258 L614 258 L614 274 L658 274 L658 250 L688 250 L688 270 L732 270 L732 262 L770 262 L770 274 L816 274 L816 254 L848 254 L848 270 L890 270 L890 258 L934 258 L934 272 L968 272 L968 262 L1000 262 L1000 300 Z" fill="#080e1f"/>';
+  /* distant city */
+  var x=0,i=0;
+  while(x<1000){
+    var bw=18+((i*37)%46),bh=14+((i*53)%52);
+    s+='<rect x="'+x+'" y="'+(200-bh)+'" width="'+bw+'" height="'+bh+'" fill="#0a1024" opacity=".92"/>';
+    if(i%3===0)s+='<rect x="'+(x+4)+'" y="'+(200-bh+6)+'" width="2" height="2" fill="#ffcf94" opacity=".5"/>';
+    x+=bw+5;i++;
+  }
 
-  /* runway behind the hangars */
-  s+='<rect x="0" y="212" width="1000" height="30" fill="#0b1222"/>';
-  s+='<rect x="0" y="212" width="1000" height="2" fill="#243352"/>';
-  for(var rl=0;rl<25;rl++){
-    s+='<rect x="'+(24+rl*40)+'" y="225" width="20" height="3.2" rx="1.6" fill="#6b7d9f" opacity=".85"/>';
+  /* runway, edge lights, approach */
+  s+='<rect x="0" y="198" width="1000" height="28" fill="#0b1221"/>';
+  s+='<rect x="0" y="224" width="1000" height="2" fill="#22304c"/>';
+  for(var lx=24;lx<1000;lx+=46){
+    s+='<circle cx="'+lx+'" cy="200" r="1.7" fill="#ffd9a0" opacity=".85"/>';
+    s+='<circle cx="'+(lx+23)+'" cy="224" r="1.4" fill="#8fd0ff" opacity=".6"/>';
   }
-  for(var ed=0;ed<22;ed++){
-    s+='<circle cx="'+(20+ed*46)+'" cy="214" r="1.9" fill="#ffcf8a" opacity=".95"/>';
-    s+='<circle cx="'+(20+ed*46)+'" cy="240" r="1.6" fill="#7fa8ff" opacity=".75"/>';
+  s+='<g opacity=".85">';
+  for(var ax=0;ax<7;ax++){
+    s+='<rect x="'+(468+ax*12)+'" y="'+(158-ax*10)+'" width="3" height="3" fill="#ffe9c2" opacity="'+(0.9-ax*0.1).toFixed(2)+'"/>';
   }
+  s+='</g>';
 
   /* apron */
-  s+='<path d="M0 242 L1000 242 L1000 560 L0 560 Z" fill="url(#apron)"/>';
-  s+='<path d="M0 242 L1000 242 L1000 247 L0 247 Z" fill="#2a3a58" opacity=".85"/>';
-  /* apron seams converging toward the horizon */
-  for(var sm=0;sm<9;sm++){
-    var bx=sm*125-60;
-    s+='<path d="M'+bx+' 560 L'+(bx*0.34+330)+' 246" stroke="#1b2740" stroke-width="1.1" opacity=".55"/>';
-  }
-  for(var hz=0;hz<4;hz++){
-    var yy=300+hz*hz*22;
-    s+='<path d="M0 '+yy+' L1000 '+yy+'" stroke="#1a2438" stroke-width="1" opacity=".45"/>';
-  }
-
-  /* floodlight poles */
-  [268,700].forEach(function(fx){
-    s+='<rect x="'+(fx-1.6)+'" y="150" width="3.2" height="104" fill="#28374f"/>';
-    s+='<rect x="'+(fx-13)+'" y="146" width="26" height="7" rx="2" fill="#33455f"/>';
-    s+='<circle cx="'+(fx-8)+'" cy="150" r="2.6" fill="#fff0d0"/>';
-    s+='<circle cx="'+fx+'" cy="150" r="2.6" fill="#fff0d0"/>';
-    s+='<circle cx="'+(fx+8)+'" cy="150" r="2.6" fill="#fff0d0"/>';
-    s+='<path d="M'+(fx-30)+' 152 L'+(fx+30)+' 152 L'+(fx+150)+' 430 L'+(fx-150)+' 430 Z" fill="url(#beam)" opacity=".5"/>';
+  s+='<path d="M0 226 H1000 V600 H0 Z" fill="url(#apron)"/>';
+  /* taxiway bringing traffic in, dead centre */
+  s+='<rect x="482" y="226" width="36" height="374" fill="#161f31" opacity=".55"/>';
+  for(var ty=236;ty<596;ty+=28)s+='<rect x="497" y="'+ty+'" width="6" height="14" fill="#f2c877" opacity=".5"/>';
+  /* apron seams receding to the centre */
+  [[-40,600,470,236],[1040,600,530,236]].forEach(function(p){
+    s+='<line x1="'+p[0]+'" y1="'+p[1]+'" x2="'+p[2]+'" y2="'+p[3]+'" stroke="#22304c" stroke-width="1" opacity=".45"/>';
   });
 
-  /* hangars */
-  for(var n=0;n<8;n++){
-    var x=hangarX(n),y=GEO.top,w=GEO.w,hh=GEO.h;
-    s+='<ellipse cx="'+(x+w/2)+'" cy="'+(y+hh+34)+'" rx="'+(w*0.95)+'" ry="42" fill="url(#pool)"/>';
-    s+='<rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+hh+'" rx="3" fill="#0a1226" stroke="#26344e" stroke-width="1.5"/>';
-    /* roof with a slight parapet */
-    s+='<path d="M'+(x-7)+' '+y+' L'+(x+w/2)+' '+(y-20)+' L'+(x+w+7)+' '+y+' Z" fill="#131d33" stroke="#2b3a56" stroke-width="1.3"/>';
-    s+='<path d="M'+(x-7)+' '+y+' L'+(x+w+7)+' '+y+'" stroke="#33456010" stroke-width="0"/>';
-    /* door frame + glowing opening */
-    s+='<rect x="'+(x+8)+'" y="'+(y+22)+'" width="'+(w-16)+'" height="'+(hh-30)+'" rx="2" fill="url(#door)" class="glowpulse" style="animation-delay:'+(n*0.3)+'s"/>';
-    s+='<rect x="'+(x+8)+'" y="'+(y+22)+'" width="'+(w-16)+'" height="'+(hh-30)+'" rx="2" fill="none" stroke="#e0b378" stroke-opacity=".5" stroke-width="1"/>';
-    /* interior floor light */
-    s+='<rect x="'+(x+8)+'" y="'+(y+hh-30)+'" width="'+(w-16)+'" height="14" fill="#fff3d6" opacity=".5"/>';
-    /* interior shapes so the bay looks occupied */
-    s+='<rect x="'+(x+18)+'" y="'+(y+hh-52)+'" width="'+(w-36)+'" height="22" rx="3" fill="#2a1c10" opacity=".45"/>';
-    /* door mullions */
-    s+='<path d="M'+(x+w/2)+' '+(y+22)+' L'+(x+w/2)+' '+(y+hh-8)+'" stroke="#3a2a16" stroke-opacity=".45" stroke-width="1.6"/>';
-    /* number plate on the parapet, clear of everything */
-    s+='<rect x="'+(x+w/2-17)+'" y="'+(y-30)+'" width="34" height="17" rx="2.5" fill="#0a1226" stroke="#3a4a68" stroke-width="1"/>';
-    s+='<text x="'+(x+w/2)+'" y="'+(y-17.5)+'" text-anchor="middle" font-family="Georgia,serif" font-size="12.5" letter-spacing="1" fill="#ffd9a0">'+("0"+(n+1)).slice(-2)+'</text>';
-    /* roof light */
-    s+='<circle cx="'+(x+w/2)+'" cy="'+(y-24)+'" r="2.2" fill="#ffd9a0" opacity=".9"/>';
-    /* light spill onto the apron */
-    s+='<path d="M'+(x+14)+' '+(y+hh-4)+' L'+(x+w-14)+' '+(y+hh-4)+' L'+(x+w+52)+' '+(y+hh+96)+' L'+(x-52)+' '+(y+hh+96)+' Z" fill="url(#beam)" opacity=".55"/>';
-  }
+  /* the eight client hangars */
+  var n=0;
+  GEO.rows.forEach(function(row){
+    for(var k=0;k<4;k++){
+      var hx=row.x0+k*(GEO.w+GEO.gap),hy=row.y,hw=GEO.w,hh=GEO.h;
+      s+='<rect x="'+hx+'" y="'+hy+'" width="'+hw+'" height="'+hh+'" fill="#0d1526" stroke="#26344e"/>';
+      s+='<rect x="'+hx+'" y="'+hy+'" width="'+hw+'" height="15" fill="#16203a"/>';
+      s+='<rect x="'+hx+'" y="'+(hy+hh-4)+'" width="'+hw+'" height="4" fill="#0a1120"/>';
+      /* lit doorway */
+      s+='<rect x="'+(hx+9)+'" y="'+(hy+22)+'" width="'+(hw-18)+'" height="'+(hh-30)+'" fill="url(#door)"/>';
+      s+='<rect x="'+(hx+9)+'" y="'+(hy+hh-34)+'" width="'+(hw-18)+'" height="12" fill="#fff6df" opacity=".75"/>';
+      /* light spilling onto the ramp */
+      s+='<path d="M'+(hx+9)+' '+(hy+hh)+' L'+(hx+hw-9)+' '+(hy+hh)+' L'+(hx+hw+26)+' '+(hy+hh+86)+' L'+(hx-26)+' '+(hy+hh+86)+' Z" fill="url(#spill)"/>';
+      s+='<ellipse cx="'+(hx+hw/2)+'" cy="'+(hy+hh+18)+'" rx="'+(hw*0.72)+'" ry="16" fill="url(#pool)"/>';
+      /* number on the parapet, clear of everything */
+      n++;
+      s+='<text x="'+(hx+hw/2)+'" y="'+(hy+11)+'" text-anchor="middle" font-family="Georgia,serif" font-size="10" letter-spacing="1.6" fill="#9fb2d1">'+("0"+n).slice(-2)+'</text>';
+    }
+  });
 
-  /* the aircraft, parked in front of the hangars */
-  s+=jet(74,352);
-  /* ground support */
-  s+=tug(690,470);s+=truck(792,462);
-  s+=person(560,452);s+=person(576,460);s+=person(936,458);s+=person(953,466);
-  /* foreground falloff */
-  s+='<rect x="0" y="474" width="1000" height="86" fill="url(#fore)"/>';
+  /* floodlight masts */
+  [[8,238],[992,238]].forEach(function(p){
+    s+='<line x1="'+p[0]+'" y1="'+(p[1]+40)+'" x2="'+p[0]+'" y2="'+(p[1]-96)+'" stroke="#2b3a56" stroke-width="2"/>';
+    s+='<circle cx="'+p[0]+'" cy="'+(p[1]-98)+'" r="4" fill="#ffe0ad" opacity=".9"/>';
+    s+='<path d="M'+(p[0]-4)+' '+(p[1]-96)+' L'+(p[0]-120)+' '+(p[1]+150)+' L'+(p[0]+120)+' '+(p[1]+150)+' L'+(p[0]+4)+' '+(p[1]-96)+' Z" fill="#ffd79a" opacity=".05"/>';
+  });
+
+  /* the aircraft, centre stage, and the way into the whole operation */
+  s+='<ellipse cx="500" cy="566" rx="230" ry="26" fill="url(#jetglow)"/>';
+  s+='<g id="jetbtn" role="button" tabindex="0" aria-label="Open overall operations: clients, weather, readiness and next actions" style="cursor:pointer">';
+  s+=jet(300,452,1.32);
+  s+='<rect x="380" y="580" width="240" height="16" rx="8" fill="#0b1220" opacity=".85"/>';
+  s+='<text x="500" y="591" text-anchor="middle" font-family="Georgia,serif" font-size="9" letter-spacing="2.2" fill="#ffd79a">TAP THE AIRCRAFT FOR ALL OPERATIONS</text>';
+  s+='</g>';
+
+  /* ramp traffic and crew */
+  s+=tug(120,520)+truck(150,486);
+  s+=person(742,520,'#0c1424')+person(760,528,'#0c1424')+person(846,514,'#0c1424');
+  s+='<rect x="0" y="540" width="1000" height="60" fill="url(#fg)"/>';
   return s;
 }
 
-function jet(tx,ty){
-  var g='<g transform="translate('+tx+','+ty+') scale(1.18)">';
+function jet(tx,ty,sc){
+  sc=sc||1.18;
+  var g='<g transform="translate('+tx+','+ty+') scale('+sc+')">';
   g+='<ellipse cx="210" cy="96" rx="215" ry="11" fill="#04080f" opacity=".55"/>';
-  g+='<path d="M-6 62 C40 34,150 20,268 20 C330 20,392 26,432 36 L446 46 C400 60,300 74,210 76 L60 76 C20 74,-6 70,-6 62 Z" fill="url(#fus)" stroke="#6d7f9e" stroke-width="1"/>';
+  g+='<path d="M-6 62 C40 34,150 20,268 20 C330 20,392 26,432 36 L446 46 C400 60,300 74,210 76 L60 76 C20 74,-6 70,-6 62 Z" fill="url(#body)" stroke="#6d7f9e" stroke-width="1"/>';
   g+='<path d="M392 30 C416 33,436 40,446 46 C424 54,402 58,384 60 Z" fill="#b9cbe4" opacity=".95"/>';
   g+='<path d="M400 33 C418 36,432 41,441 46 L420 50 Z" fill="#8fd4f5" opacity=".9"/>';
   for(var wi=0;wi<9;wi++){
@@ -429,6 +478,8 @@ function buildScene(){
   renderBays();
   renderWx();
   renderSweep();
+  renderJetHit();
+  wireScene();
 }
 
 function renderBays(){
@@ -440,13 +491,13 @@ function renderBays(){
     var col=m?readinessColor(m):"grey";
     var hex=statusHex(col);
     var num=("0"+(n+1)).slice(-2);
-    var x=hangarX(n);
+    var pos=hangarPos(n), x=pos.x;
     var b=document.createElement("button");
     b.className="bayhit";b.type="button";
     b.style.left=((x+2)/1000*100)+"%";
-    b.style.top=((GEO.top+GEO.h+8)/560*100)+"%";
+    b.style.top=((pos.y+GEO.h+8)/600*100)+"%";
     b.style.width=((GEO.w-4)/1000*100)+"%";
-    b.style.height="13.5%";
+    b.style.height=(62/600*100)+"%";
     if(m){
       var rd=S.ready[m.id]||{};
       var tzt=(S.airports[m.destination]||{}).tz||(S.airports[m.origin]||{}).tz||"America/New_York";
@@ -474,6 +525,20 @@ function renderBays(){
       list.appendChild(lb);
     }
   }
+}
+
+function wxFor(code){
+  S.wx=S.wx||{};
+  var c=COORD[code];
+  if(!c)return Promise.resolve(null);
+  if(S.wx[code])return Promise.resolve(S.wx[code]);
+  var url="https://api.open-meteo.com/v1/forecast?latitude="+c[0]+"&longitude="+c[1]
+    +"&current=temperature_2m,weather_code,wind_speed_10m&temperature_unit=celsius&wind_speed_unit=mph";
+  return fetch(url).then(function(r){return r.json()}).then(function(j){
+    var cur=j&&j.current;if(!cur)return null;
+    var o={t:Math.round(cur.temperature_2m),w:WXCODE[cur.weather_code]||"conditions unknown",wind:Math.round(cur.wind_speed_10m)};
+    S.wx[code]=o;return o;
+  }).catch(function(){return null});
 }
 
 function renderWx(){
@@ -541,11 +606,122 @@ function updateClocks(){
   });
 }
 
+
+/* ---------------- the whole operation ---------------- */
+function showOps(){
+  var box=$("#ops"); if(!box)return;
+  try{
+  var all=S.missions.slice();
+  var real=all.filter(function(m){return !m.is_example});
+  var now=Date.now();
+  var realIds={};real.forEach(function(m){realIds[m.id]=1});
+  var blocked=all.filter(function(m){return readinessColor(m)==="red"});
+  var overdue=S.orders.filter(function(o){
+    if(!realIds[o.mission_id]&&real.length)return false;
+    if(["delivered","declined","cancelled"].indexOf(o.state)>=0)return false;
+    return o.due_at&&new Date(o.due_at).getTime()<now;
+  });
+  var problems=(S.incidents||[]).filter(function(i){return i.status==="open"});
+  var actions=all.filter(function(m){var r=S.ready[m.id]||{};return r.next_action});
+
+  $("#opssub").textContent=all.length+" client mission"+(all.length===1?"":"s")+" on the board, "
+    +"live from the database, read "+new Date().toLocaleTimeString();
+
+  var html='<div class="ops-tiles">'
+    +'<div class="ops-tile"><i>'+real.length+'</i><span>Active clients</span></div>'
+    +'<div class="ops-tile"><i>'+blocked.length+'</i><span>Blocked</span></div>'
+    +'<div class="ops-tile"><i>'+overdue.length+'</i><span>Overdue orders</span></div>'
+    +'<div class="ops-tile"><i>'+problems.length+'</i><span>Open problems</span></div>'
+    +'<div class="ops-tile"><i>'+actions.length+'</i><span>Next actions</span></div>'
+    +'</div>';
+
+  if(!all.length){
+    html+='<div class="empty">No client missions on the board. The cabin is empty and eight hangars are lit and waiting.</div>';
+  }else{
+    html+='<div class="sub" style="margin:2px 0 8px">Cabin &middot; each seat is one client mission. Select a seat for that mission.</div>';
+    html+='<div class="seats">';
+    all.forEach(function(m,idx){
+      var col=readinessColor(m), rd=S.ready[m.id]||{};
+      var tz=(S.airports[m.destination]||{}).tz||(S.airports[m.origin]||{}).tz||"America/New_York";
+      var field=m.destination||m.origin||"?";
+      var flying=(S.assign||[]).filter(function(a){return a.mission_id===m.id}).map(function(a){
+        var c=S.crew[a.crew_id]||{};return c.name||("crew "+a.crew_id);
+      }).join(", ");
+      html+='<button class="seat" data-mid="'+esc(m.id)+'" data-field="'+esc(field)+'" style="--seatc:'+statusHex(col)+'">'
+        +'<span class="sn">SEAT '+("0"+(idx+1)).slice(-2)+'</span>'
+        +'<b>'+esc(m.label)+(m.is_example?' <span class="chip c-grey">rehearsal</span>':'')+'</b>'
+        +'<small>'+esc((m.origin||"?")+" to "+(m.destination||"?"))+' &middot; '+esc(tzTime(tz))+' local</small>'
+        +'<small class="wxl" data-wx="'+esc(field)+'">'+esc(field)+' ...</small>'
+        +'<small>Flying: '+esc(flying||"no crew assigned")+'</small>'
+        +'<small style="color:'+statusHex(col)+'">'+esc(statusWord(col))+' &middot; next: '+esc(rd.next_action||"none stated")+'</small>'
+        +'</button>';
+    });
+    /* empty seats show capacity without inventing missions */
+    for(var e=all.length;e<8;e++){
+      html+='<div class="seat empty"><span class="sn">SEAT '+("0"+(e+1)).slice(-2)+'</span><b>Open</b><small>no client on this seat</small></div>';
+    }
+    html+='</div>';
+    if(all.length>8){
+      html+='<div class="note">Eight seats are the cabin layout, not the limit. Every mission above is listed, so a ninth client still appears here.</div>';
+    }
+  }
+  $("#opsbody").innerHTML=html;
+  box.hidden=false;
+  $("#opsclose").focus();
+
+  Array.prototype.forEach.call(document.querySelectorAll("#opsbody .seat[data-mid]"),function(r){
+    r.onclick=function(){var id=r.getAttribute("data-mid");box.hidden=true;openMission(id)};
+  });
+  Array.prototype.forEach.call(document.querySelectorAll("#opsbody [data-wx]"),function(el){
+    var code=el.getAttribute("data-wx");
+    el.textContent=code+" ...";
+    wxFor(code).then(function(w){
+      el.innerHTML=w?(esc(code)+"<br>"+w.t+"&deg;C "+esc(w.w)+"<br>wind "+w.wind+" mph"):esc(code)+"<br>no weather";
+    });
+  });
+  }catch(e){
+    box.hidden=false;
+    $("#opsbody").innerHTML='<div class="empty">The operations view could not open: '+esc(e.message)+'</div>';
+  }
+}
+
+function renderJetHit(){
+  var layer=$("#htmlLayer"); if(!layer)return;
+  var b=document.createElement("button");
+  b.type="button";
+  b.className="bayhit jethit";
+  b.style.left=(288/1000*100)+"%";
+  b.style.top=(440/600*100)+"%";
+  b.style.width=(424/1000*100)+"%";
+  b.style.height=(142/600*100)+"%";
+  b.innerHTML='<span class="bn" style="opacity:0">00</span>';
+  b.setAttribute("aria-label","Open overall operations: clients, weather, readiness and next actions");
+  b.onclick=showOps;
+  layer.appendChild(b);
+}
+
+function wireScene(){
+  var jb=document.getElementById("jetbtn");
+  if(!jb)return;
+  jb.addEventListener("click",showOps);
+  jb.addEventListener("keydown",function(e){
+    if(e.key==="Enter"||e.key===" "){e.preventDefault();showOps()}
+  });
+  var oc=$("#opsclose"); if(oc)oc.onclick=function(){$("#ops").hidden=true};
+}
+
 function openMission(id){
   try{
-    var m=S.missions.filter(function(x){return x.id===id})[0];if(!m)return;
+    var mid=String(id);
+    var m=S.missions.filter(function(x){return String(x.id)===mid})[0];
+    if(!m){toast("That hangar is not on the board any more.");return}
     S.open=id;renderPanel(m);$("#panel").className="open";
-  }catch(e){toast("Could not open hangar: "+e.message);console.error(e)}
+  }catch(e){
+    console.error(e);
+    var p=$("#panel");
+    if(p){p.className="open";p.innerHTML='<header><div class="t"><b>Hangar could not open</b><small>'+esc(e.message)+'</small></div><button id="pclose" aria-label="Close">Close</button></header>';var c=$("#pclose");if(c)c.onclick=closePanel}
+    toast("Could not open hangar: "+e.message);
+  }
 }
 function closePanel(){S.open=null;$("#panel").className=""}
 function ordStateChip(st){
