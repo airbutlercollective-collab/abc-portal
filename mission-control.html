@@ -249,7 +249,7 @@ else if(s=="unavailable")h=n+" is unavailable. Tap another eligible attendant.";
 async function faAct(act){if(role=="kai"||role=="fa")return blk("BLOCKED: your role can't change assignments.");var c=DB.crew.filter(function(x){return x.id==FA.sel})[0],ns={ask:"asked",avail:"available",unavail:"unavailable",assign:"assigned"}[act];
 if(LIVE.on){try{var q=act=="ask"?await sbq().from("mission_assignments").insert({mission_id:LIVE.mid,crew_id:FA.sel,state:"asked"}).select().single():await sbq().from("mission_assignments").update({state:ns}).eq("id",FA.aid).select().single();
 if(q.error)return blk("BLOCKED by the database: "+fr(q.error.message));FA.aid=q.data.id}catch(e){return blk(e.message)}}
-if(LIVE.on)saved();FA.s=ns;rec(NAMES[role]+": "+c.name+" "+{asked:"asked about availability",available:"recorded AVAILABLE",unavailable:"recorded UNAVAILABLE",assigned:"ASSIGNED to this mission"}[ns]++".");syncFA();refresh()}
+if(LIVE.on)saved();FA.s=ns;rec(NAMES[role]+": "+c.name+" "+{asked:"asked about availability",available:"recorded AVAILABLE",unavailable:"recorded UNAVAILABLE",assigned:"ASSIGNED to this mission"}[ns]+".");syncFA();refresh()}
 function reroot(){busy=0;var old=cur;cur=build(path[path.length-1][0]);if(old)old.remove();crumbs();hint()}
 function setRole(r){role=r;flash="";if(r=="fa"){path=[["fahome","MY MISSION"]];reroot()}else if(path[0][0]=="fahome"){path=[["abc","ABC AIRPORT"]];reroot()}who();cons()}
 function who(){var e=document.getElementById("who");if(LIVE.on){e.innerHTML='<span>SIGNED IN</span><b style="flex:1;color:#e8f0ff">'+esc(LIVE.name)+" · "+LIVE.role.toUpperCase().replace("_"," ")+'</b><button onclick="liveOut()" style="flex:none;padding:9px 12px">SIGN OUT</button>';return}
