@@ -79,6 +79,14 @@ MC.decorate=function(a,list){
   var orange=list.filter(function(m){return colOf(m)==='orange'}).length;
   var green=list.filter(function(m){return colOf(m)==='green'}).length;
   var texts=a.querySelectorAll('text');
+  if(!MC.signed()){for(var j=0;j<texts.length;j++){var u=s(texts[j].textContent);
+    if(/^MISSION #\d+$/.test(u))texts[j].textContent='MISSIONS';
+    else if(u==='BLOCKED')texts[j].textContent='STATUS';
+    else if(/^\d+ problems?$/.test(u))texts[j].textContent='SIGN IN TO VIEW';
+    else if(/^R-001 REHEARSAL$/.test(u))texts[j].textContent='EXAMPLE MISSION';
+    else if(/TEB . FLL/.test(u))texts[j].textContent='NOT A REAL FLIGHT';
+    else if(/^\d+ (to watch|clear)$/.test(u))texts[j].textContent='';}
+    return}
   for(var i=0;i<texts.length;i++){
     var t=texts[i],v=s(t.textContent);
     if(/^MISSION #\d+$/.test(v))t.textContent=list.length+' MISSION'+(list.length===1?'':'S');
