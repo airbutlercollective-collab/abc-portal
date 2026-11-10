@@ -22,6 +22,17 @@ border-radius:0 6px 6px 0;font-size:12px}
 svg#scene{display:block;width:100%;height:auto;touch-action:manipulation}
 .legend{display:flex;gap:14px;justify-content:center;margin:8px 0 0;font-size:10.5px;color:var(--mut);letter-spacing:.06em;flex-wrap:wrap}
 .legend i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px;vertical-align:1px}
+.sweep{margin-top:10px;padding:11px 13px;border:1px solid var(--line);border-left:3px solid var(--amber);border-radius:0 8px 8px 0;background:rgba(255,165,61,.06);font-size:12.5px;line-height:1.5}
+.sweep b{letter-spacing:.04em}
+.sweep .names{display:block;color:var(--mut);font-size:11.5px;margin-top:4px}
+.oversight{margin-top:9px;padding:11px 13px;border:1px solid var(--line);border-radius:8px;background:#060d1d}
+.oversight h4{margin:0 0 9px;font:400 9.8px/1.4 system-ui;letter-spacing:.16em;text-transform:uppercase;color:var(--mut)}
+.tiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
+@media(min-width:620px){.tiles{grid-template-columns:repeat(5,minmax(0,1fr))}}
+.tile{border:1px solid var(--line);border-radius:7px;padding:8px 9px;min-width:0}
+.tile i{display:block;font:400 17px/1.2 Georgia,serif;font-style:normal;color:var(--ink)}
+.tile span{display:block;color:var(--mut);font-size:9.8px;letter-spacing:.1em;text-transform:uppercase;margin-top:3px}
+.tile.red i{color:var(--red)}.tile.green i{color:var(--green)}.tile.amber i{color:var(--amber)}
 .bar{display:flex;align-items:center;gap:10px;margin-top:12px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;
 font-size:11px;color:var(--mut);letter-spacing:.04em}
 .bar .who{color:var(--ink)}
@@ -84,11 +95,13 @@ background:#0c1a33;border:1px solid var(--line);font-size:12px;display:none;z-in
 <div id="app" hidden>
   <div class="stagewrap"><svg id="scene" viewBox="0 0 1000 620" role="img" aria-label="Air Butler Collective airport with eight mission hangars"></svg></div>
   <div class="legend">
-    <span><i style="background:var(--green)"></i>Ready</span>
-    <span><i style="background:var(--amber)"></i>Needs attention</span>
-    <span><i style="background:var(--red)"></i>Blocked</span>
-    <span><i style="background:var(--grey)"></i>Empty</span>
+    <span><i style="background:var(--green)"></i>CLEAR</span>
+    <span><i style="background:var(--amber)"></i>WATCH</span>
+    <span><i style="background:var(--red)"></i>PROBLEM</span>
+    <span><i style="background:var(--grey)"></i>NOT MONITORED</span>
   </div>
+  <div id="sweep" class="sweep"></div>
+  <div id="oversight" class="oversight"></div>
   <div class="bar"><span class="who" id="who">-</span><span id="sync"></span><button id="refresh">Refresh</button><button id="out">Sign out</button></div>
 </div>
 
@@ -100,13 +113,14 @@ background:#0c1a33;border:1px solid var(--line);font-size:12px;display:none;z-in
 var SB_URL="https://xacwvpxfutczxsqxykiu.supabase.co";
 var SB_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhhY3d2cHhmdXRjenhzcXh5a2l1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI2OTc0ODYsImV4cCI6MjA5ODI3MzQ4Nn0.a2MvwEYNFaR2gir3DfThl7N4fE2cZxQZX8ySSQc5a8E";
 var SKEY="abc.portal.sess.v1";
-var S={sess:null,me:null,missions:[],ready:{},orders:[],vendors:{},crew:{},assign:[],incidents:[],airports:{},open:null};
+var S={sess:null,me:null,missions:[],ready:{},orders:[],vendors:{},crew:{},assign:[],incidents:[],airports:{},needs:[],changes:[],open:null};
 
 /* ---------------- helpers ---------------- */
 function $(s){return document.querySelector(s)}
 function el(t,a,txt){var e=document.createElementNS("http://www.w3.org/2000/svg",t);for(var k in (a||{}))e.setAttribute(k,a[k]);if(txt!=null)e.textContent=txt;return e}
 function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
 function toast(m){var t=$("#toast");t.textContent=m;t.className="show";clearTimeout(t._x);t._x=setTimeout(function(){t.className=""},3200)}
+function statusWord(c){return c==="red"?"PROBLEM":c==="orange"?"WATCH":c==="green"?"CLEAR":"NOT MONITORED"}
 function colorOf(c){return c==="red"?"var(--red)":c==="orange"?"var(--amber)":c==="green"?"var(--green)":"var(--grey)"}
 function chipClass(c){return c==="red"?"c-red":c==="orange"?"c-amber":c==="green"?"c-green":"c-grey"}
 function tzTime(tz,when){
@@ -168,13 +182,16 @@ async function loadAll(){
     sb("vendors?select=id,name,category"),
     sb("crew?select=id,name,crew_role,status&active=eq.true"),
     sb("mission_assignments?select=id,mission_id,crew_id,state"),
-    sb("incidents?select=id,mission_id,title,status,severity,required_action&status=eq.open"),
-    sb("airports?select=code,name,tz")
+    sb("incidents?select=id,mission_id,title,status,severity,required_action,is_example&status=eq.open"),
+    sb("airports?select=code,name,tz"),
+    sb("passenger_needs?select=id,passenger_id,category,detail,severity"),
+    sb("mission_changes?select=id,mission_id,kind,detail,at")
   ]);
   S.missions=res[0]||[];S.ready={};(res[1]||[]).forEach(function(r){S.ready[r.mission_id]=r});
   S.orders=res[2]||[];S.vendors={};(res[3]||[]).forEach(function(v){S.vendors[v.id]=v});
   S.crew={};(res[4]||[]).forEach(function(c){S.crew[c.id]=c});
   S.assign=res[5]||[];S.incidents=res[6]||[];S.airports={};(res[7]||[]).forEach(function(a){S.airports[a.code]=a});
+  S.needs=res[8]||[];S.changes=res[9]||[];
   S.me=(await mePromise)[0]||null;
 }
 async function uid(){
@@ -279,9 +296,10 @@ function buildScene(){
       var clk=el("text",{x:cx,y:baseY+38,"text-anchor":"middle","font-size":"9.5","letter-spacing":"1",fill:"#8fa3c7","data-tz":tzt,class:"clk"});
       clk.textContent=tzTime(tzt);g.appendChild(clk);
       var rd=S.ready[m.id]||{};
-      var line=(rd.open_orders||0)+" open";
-      if((rd.blocking_incidents||0)>0)line=(rd.blocking_incidents)+" BLOCKED";
-      g.appendChild(el("text",{x:cx,y:baseY+50,"text-anchor":"middle","font-size":"8.8","letter-spacing":".9",fill:hex})).textContent=line.toUpperCase();
+      var word=statusWord(col);
+      var open=(rd.open_orders||0);
+      g.appendChild(el("text",{x:cx,y:baseY+50,"text-anchor":"middle","font-size":"8.4","letter-spacing":".8",fill:hex})).textContent=word;
+      g.appendChild(el("text",{x:cx,y:baseY+61,"text-anchor":"middle","font-size":"8","letter-spacing":".6",fill:"#6b7d9f"})).textContent=(open?open+" open order"+(open>1?"s":""):"no open orders");
       if(m.is_example){
         g.appendChild(el("text",{x:cx,y:baseY-hh-22,"text-anchor":"middle","font-size":"8","letter-spacing":"1.4",fill:"#c9ab6b"})).textContent="REHEARSAL";
       }
@@ -294,6 +312,43 @@ function buildScene(){
   }
   svg.appendChild(el("text",{x:500,y:608,"text-anchor":"middle","font-size":"9","letter-spacing":"2.6",fill:"#5b6d92"})).textContent="TAP A HANGAR TO ENTER THE MISSION";
   layoutHits();
+  renderSweep();
+}
+
+function realOnly(list){return list.filter(function(x){return !x.is_example})}
+function renderSweep(){
+  var counts={red:0,orange:0,green:0,grey:0},problems=[];
+  S.missions.forEach(function(m){
+    var c=readinessColor(m);counts[c==="red"?"red":c==="orange"?"orange":c==="green"?"green":"grey"]++;
+    if(c==="red")problems.push(m.label+(m.is_example?" (example)":""));
+  });
+  var empty=8-S.missions.length;
+  counts.grey+=empty>0?empty:0;
+  var s=$("#sweep");
+  if(!s)return;
+  s.innerHTML='<b>Sweep complete.</b> '+counts.red+' problem, '+counts.orange+' watch, '+counts.green+' clear, '+counts.grey+' not monitored.'
+    +(problems.length?'<span class="names">Problems: '+problems.map(esc).join(" &middot; ")+'</span>'
+      :'<span class="names">No mission is reporting a problem.</span>');
+
+  var now=Date.now();
+  var real=S.missions.filter(function(m){return !m.is_example});
+  var realIds={};real.forEach(function(m){realIds[m.id]=1});
+  var problemsReal=S.incidents.filter(function(i){return i.status==="open"&&!i.is_example&&realIds[i.mission_id]}).length;
+  var overdue=S.orders.filter(function(o){
+    if(!realIds[o.mission_id])return false;
+    if(["delivered","declined","cancelled"].indexOf(o.state)>=0)return false;
+    return o.due_at&&new Date(o.due_at).getTime()<now;
+  }).length;
+  var handoffs=(S.changes||[]).length;
+  var example=S.missions.length-real.length;
+
+  $("#oversight").innerHTML='<h4>Executive view &middot; counts come from the database &middot; example records are not counted</h4><div class="tiles">'
+    +'<div class="tile"><i>'+real.length+'</i><span>Real missions</span></div>'
+    +'<div class="tile"><i>'+example+'</i><span>Example records</span></div>'
+    +'<div class="tile '+(problemsReal?'red':'')+'"><i>'+problemsReal+'</i><span>Active problems</span></div>'
+    +'<div class="tile '+(overdue?'amber':'green')+'"><i>'+overdue+'</i><span>Overdue orders</span></div>'
+    +'<div class="tile"><i>'+handoffs+'</i><span>Written handoffs</span></div>'
+    +'</div>';
 }
 
 function layoutHits(){
@@ -410,6 +465,20 @@ function renderPanel(m){
     var c=S.crew[a.crew_id]||{name:"crew "+a.crew_id};
     html+='<dt>'+esc(c.name)+'</dt><dd>'+esc(a.state||"asked")+'</dd>';
   });html+='</div>'}
+  html+='</div>';
+
+  var needs=(S.needs||[]).filter(function(n){return n.passenger_id&&n.passenger_id===m.passenger_id});
+  html+='<div class="sec"><h3>Client intake ('+needs.length+' recorded)</h3>';
+  if(!needs.length){
+    html+='<div class="empty">Passenger profiles recorded: 0.<br>Allergies, dietary, beverages, cabin temperature, blankets, seating, lighting, scent, flowers to avoid, amenities, accommodations. All unknown until recorded. Nothing here is guessed.</div>';
+  }else{
+    html+='<div class="kv">';
+    needs.forEach(function(n){
+      html+='<dt>'+esc(n.category||"need")+'</dt><dd>'+esc(n.detail||"")
+        +(n.severity?' <span class="chip '+(n.severity==="safety_critical"?"c-red":"c-grey")+'">'+esc(n.severity)+'</span>':'')+'</dd>';
+    });
+    html+='</div>';
+  }
   html+='</div>';
 
   if(incs.length){
